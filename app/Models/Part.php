@@ -25,6 +25,8 @@ class Part extends Model
         'min_stock_alert',
         'shelf_location',
         'compatibility',
+        'warranty_months',
+        'warranty_km',
     ];
 
     /**
@@ -39,6 +41,8 @@ class Part extends Model
             'reserved_quantity' => 'integer',
             'min_stock_alert' => 'integer',
             'compatibility' => 'array',
+            'warranty_months' => 'integer',
+            'warranty_km' => 'integer',
         ];
     }
 

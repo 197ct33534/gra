@@ -17,6 +17,8 @@ class Service extends Model
         'labor_cost',
         'technician_payout',
         'standard_time_minutes',
+        'warranty_months',
+        'warranty_km',
     ];
 
     /**
@@ -28,6 +30,8 @@ class Service extends Model
             'labor_cost' => 'decimal:2',
             'technician_payout' => 'decimal:2',
             'standard_time_minutes' => 'integer',
+            'warranty_months' => 'integer',
+            'warranty_km' => 'integer',
         ];
     }
 

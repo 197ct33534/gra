@@ -23,6 +23,10 @@ class CustomerMessage extends Model
         'status',
         'provider_message_id',
         'error',
+        'attempts',
+        'last_attempt_at',
+        'template_code',
+        'template_data',
         'scheduled_at',
         'sent_at',
         'created_by',
@@ -36,6 +40,9 @@ class CustomerMessage extends Model
         return [
             'type' => CustomerMessageType::class,
             'status' => CustomerMessageStatus::class,
+            'attempts' => 'integer',
+            'last_attempt_at' => 'datetime',
+            'template_data' => 'array',
             'scheduled_at' => 'datetime',
             'sent_at' => 'datetime',
         ];

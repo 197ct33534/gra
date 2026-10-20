@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\EInvoiceStatus;
 use App\Enums\InvoicePayer;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -27,6 +28,18 @@ class Invoice extends Model
         'vat_rate',
         'amount_before_vat',
         'vat_amount',
+        'einvoice_status',
+        'einvoice_number',
+        'einvoice_series',
+        'einvoice_template',
+        'einvoice_provider',
+        'einvoice_provider_id',
+        'einvoice_tax_authority_code',
+        'einvoice_lookup_url',
+        'einvoice_issued_at',
+        'einvoice_canceled_at',
+        'einvoice_error',
+        'einvoice_payload',
     ];
 
     /**
@@ -50,6 +63,10 @@ class Invoice extends Model
             'vat_rate' => 'integer',
             'amount_before_vat' => 'decimal:2',
             'vat_amount' => 'decimal:2',
+            'einvoice_status' => EInvoiceStatus::class,
+            'einvoice_issued_at' => 'datetime',
+            'einvoice_canceled_at' => 'datetime',
+            'einvoice_payload' => 'array',
         ];
     }
 

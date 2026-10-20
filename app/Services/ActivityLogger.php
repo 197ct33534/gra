@@ -10,6 +10,7 @@ use App\Models\Part;
 use App\Models\PurchaseOrder;
 use App\Models\Service;
 use App\Models\Stocktake;
+use App\Models\WarrantyCard;
 use App\Models\WorkOrder;
 use Illuminate\Database\Eloquent\Model;
 
@@ -35,10 +36,12 @@ class ActivityLogger
     {
         return match (true) {
             $subject instanceof WorkOrder => $subject->code,
-            $subject instanceof Invoice => $subject->invoice_number,
+            $subject instanceof Invoice => $subject->einvoice_number
+                ? trim((string) $subject->einvoice_series.(string) $subject->einvoice_number)
+                : $subject->invoice_number,
             $subject instanceof Part => $subject->sku,
             $subject instanceof Service => $subject->code,
-            $subject instanceof PurchaseOrder, $subject instanceof GoodsReceipt, $subject instanceof Stocktake => $subject->code,
+            $subject instanceof PurchaseOrder, $subject instanceof GoodsReceipt, $subject instanceof Stocktake, $subject instanceof WarrantyCard => $subject->code,
             default => null,
         };
     }

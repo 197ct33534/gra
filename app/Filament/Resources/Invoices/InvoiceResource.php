@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Invoices;
 
+use App\Enums\EInvoiceStatus;
 use App\Enums\InvoicePayer;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -9,6 +10,8 @@ use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\Invoices\Pages\ListInvoices;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
 use App\Models\Invoice;
+use App\Models\User;
+use App\Services\EInvoiceService;
 use App\Services\WorkOrderService;
 use App\Support\VietnameseMoney;
 use BackedEnum;
@@ -16,6 +19,7 @@ use DomainException;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -161,14 +165,96 @@ class InvoiceResource extends Resource
             ])
             ->recordActions([
                 self::recordPaymentAction(),
+                self::issueEInvoiceAction(),
+                self::cancelEInvoiceAction(),
+                self::sendEInvoiceLinkAction(),
                 Action::make('printInvoice')
                     ->label('In hóa đơn')
                     ->icon(Heroicon::OutlinedPrinter)
                     ->color('success')
                     ->url(fn (Invoice $record): string => route('invoices.pdf', $record))
                     ->openUrlInNewTab(),
+                Action::make('openEInvoiceLookup')
+                    ->label('Tra cứu HĐĐT')
+                    ->icon(Heroicon::OutlinedLink)
+                    ->url(fn (Invoice $record): ?string => $record->einvoice_lookup_url)
+                    ->openUrlInNewTab()
+                    ->visible(fn (Invoice $record): bool => filled($record->einvoice_lookup_url)),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    public static function issueEInvoiceAction(): Action
+    {
+        return Action::make('issueEInvoice')
+            ->label('Xuất HĐĐT')
+            ->icon(Heroicon::OutlinedDocumentCheck)
+            ->color('primary')
+            ->visible(fn (Invoice $record): bool => ! in_array($record->einvoice_status, [EInvoiceStatus::Issued], true))
+            ->form([
+                Toggle::make('admin_override')
+                    ->label('Admin: xuất dù chưa thu đủ')
+                    ->visible(fn (): bool => User::current()?->isAdmin() ?? false),
+            ])
+            ->action(function (Invoice $record, array $data): void {
+                try {
+                    $invoice = app(EInvoiceService::class)->issue(
+                        $record,
+                        (bool) ($data['admin_override'] ?? false) && (User::current()?->isAdmin() ?? false),
+                    );
+                    Notification::make()
+                        ->title('Đã xuất HĐĐT')
+                        ->body($invoice->einvoice_series.$invoice->einvoice_number)
+                        ->success()
+                        ->send();
+                } catch (DomainException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
+                }
+            });
+    }
+
+    public static function cancelEInvoiceAction(): Action
+    {
+        return Action::make('cancelEInvoice')
+            ->label('Hủy HĐĐT')
+            ->icon(Heroicon::OutlinedXCircle)
+            ->color('danger')
+            ->requiresConfirmation()
+            ->visible(fn (Invoice $record): bool => $record->einvoice_status === EInvoiceStatus::Issued
+                && (User::current()?->isAdmin() ?? false))
+            ->form([
+                Textarea::make('reason')->label('Lý do hủy')->required()->rows(2),
+            ])
+            ->action(function (Invoice $record, array $data): void {
+                $user = User::current();
+                if ($user === null) {
+                    return;
+                }
+
+                try {
+                    app(EInvoiceService::class)->cancel($record, (string) $data['reason'], $user->id);
+                    Notification::make()->title('Đã hủy HĐĐT.')->success()->send();
+                } catch (DomainException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
+                }
+            });
+    }
+
+    public static function sendEInvoiceLinkAction(): Action
+    {
+        return Action::make('sendEInvoiceLink')
+            ->label('Gửi link HĐĐT')
+            ->icon(Heroicon::OutlinedChatBubbleLeft)
+            ->visible(fn (Invoice $record): bool => $record->einvoice_status === EInvoiceStatus::Issued)
+            ->action(function (Invoice $record): void {
+                $message = app(EInvoiceService::class)->queueLookupLink($record);
+                if ($message === null) {
+                    Notification::make()->title('Không gửi được (thiếu SĐT / HĐ BH).')->warning()->send();
+
+                    return;
+                }
+                Notification::make()->title('Đã xếp hàng gửi link HĐĐT.')->success()->send();
+            });
     }
 
     public static function recordPaymentAction(): Action

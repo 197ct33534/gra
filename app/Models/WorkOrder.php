@@ -24,6 +24,7 @@ class WorkOrder extends Model implements HasMedia
         'code',
         'vehicle_id',
         'order_type',
+        'warranty_card_id',
         'insurance_company',
         'insurance_deductible',
         'service_advisor_id',
@@ -85,6 +86,11 @@ class WorkOrder extends Model implements HasMedia
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function warrantyCard(): BelongsTo
+    {
+        return $this->belongsTo(WarrantyCard::class);
     }
 
     public function serviceAdvisor(): BelongsTo

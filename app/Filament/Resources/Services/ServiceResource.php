@@ -78,6 +78,14 @@ class ServiceResource extends Resource
                     ->minValue(1)
                     ->suffix('phút')
                     ->default(60),
+                TextInput::make('warranty_months')
+                    ->label('BH công (tháng)')
+                    ->numeric()
+                    ->minValue(0),
+                TextInput::make('warranty_km')
+                    ->label('BH công (km)')
+                    ->numeric()
+                    ->minValue(0),
             ]);
     }
 

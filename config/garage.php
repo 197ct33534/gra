@@ -7,6 +7,8 @@ return [
     'bank_id' => env('GARAGE_BANK_ID', 'MB'),
     'account_no' => env('GARAGE_ACCOUNT_NO', '0901234567'),
     'account_name' => env('GARAGE_ACCOUNT_NAME', 'GARA O TO DUC PHAT'),
+    'warranty_terms' => env('GARAGE_WARRANTY', 'Bảo hành phụ tùng 06 tháng hoặc 10.000 km tùy điều kiện nào đến trước.'),
+    // Alias cũ: một số view/PDF còn đọc config('garage.warranty') dạng chuỗi.
     'warranty' => env('GARAGE_WARRANTY', 'Bảo hành phụ tùng 06 tháng hoặc 10.000 km tùy điều kiện nào đến trước.'),
     // Cố vấn dịch vụ được giảm giá / bán dưới bảng giá tối đa bao nhiêu %; vượt mức cần chủ gara.
     'advisor_max_discount_percent' => (float) env('GARAGE_ADVISOR_MAX_DISCOUNT', 10),
@@ -48,5 +50,19 @@ return [
     'cash' => [
         // true = bắt buộc mở ca trước khi thu tiền mặt; false = bỏ qua ghi quỹ (không khuyến nghị).
         'require_open_session_for_cash' => (bool) env('GARAGE_CASH_REQUIRE_SESSION', true),
+    ],
+    'warranty_defaults' => [
+        'default_months' => (int) env('GARAGE_WARRANTY_MONTHS', 6),
+        'default_km' => (int) env('GARAGE_WARRANTY_KM', 10000),
+    ],
+    'einvoice' => [
+        // log = giả lập; viettel / fpt / misa / easyinvoice khi có tài khoản.
+        'driver' => env('GARAGE_EINVOICE_DRIVER', 'log'),
+        'series' => env('GARAGE_EINVOICE_SERIES', 'C26T'),
+        'template' => env('GARAGE_EINVOICE_TEMPLATE', '1'),
+        'require_paid' => (bool) env('GARAGE_EINVOICE_REQUIRE_PAID', true),
+    ],
+    'messaging_retry' => [
+        'max_attempts' => (int) env('GARAGE_MESSAGING_MAX_ATTEMPTS', 3),
     ],
 ];

@@ -118,14 +118,20 @@ class RetentionAndBankTest extends TestCase
             ->expectsOutput('Đã tạo 1 tin nhắc, bỏ qua 0 xe.')
             ->assertSuccessful();
 
-        // Driver chưa tích hợp: tin báo lỗi rõ ràng, không giả vờ đã gửi.
-        config(['garage.messaging.driver' => 'zalo_zns']);
+        // Driver Zalo thiếu token: báo lỗi rõ, hết số lần thử → failed.
+        config([
+            'garage.messaging.driver' => 'zalo_zns',
+            'garage.messaging_retry.max_attempts' => 1,
+        ]);
+        $this->app->forgetInstance(\App\Messaging\MessageGateway::class);
         $this->artisan('garage:send-messages')->expectsOutput('Đã gửi 0 tin, lỗi 1 tin.')->assertSuccessful();
         $message = CustomerMessage::query()->sole();
         $this->assertSame(CustomerMessageStatus::Failed, $message->status);
-        $this->assertStringContainsString('zalo_zns', $message->error);
+        $this->assertStringContainsString('ZALO_OA', $message->error);
 
         config(['garage.messaging.driver' => 'log']);
+        $this->app->forgetInstance(\App\Messaging\MessageGateway::class);
+        $this->app->forgetInstance(MessagingService::class);
         $this->assertTrue(app(MessagingService::class)->deliver($message));
         $message->refresh();
         $this->assertSame(CustomerMessageStatus::Sent, $message->status);

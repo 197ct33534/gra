@@ -30,7 +30,9 @@
 | P0-H-01 → P0-H-04 | ✅ Done (2026-10-20) | Docker Compose, CI Actions, `garage:backup`, docs/ops-stg.md |
 | P0-F-01 → P0-F-04 | ✅ Done (2026-10-20) | Lịch hẹn, chống trùng cầu, nhắc tin, check-in → RO |
 | P0-G-01 → P0-G-04 | ✅ Done (2026-10-20) | Sổ quỹ ca, ghi thu tiền mặt, báo cáo VAT ra/vào |
-| P0-A / B / E | ⏳ Pending | |
+| P0-A-01 → P0-A-04 | ✅ Done (2026-10-20) | HĐĐT log driver + xuất/hủy/gửi link (adapter sẵn cho NCC thật) |
+| P0-B-01 → P0-B-04 | ✅ Done (2026-10-20) | Opt-in, retry, Zalo ZNS gateway, UI tin nhắn khách |
+| P0-E-01 → P0-E-04 | ✅ Done (2026-10-20) | Thẻ BH khi bàn giao, claim → warranty_redo, PDF, widget |
 
 ---
 

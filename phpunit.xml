@@ -33,5 +33,7 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="GARAGE_CASH_REQUIRE_SESSION" value="false"/>
+        <env name="GARAGE_MESSAGING_MAX_ATTEMPTS" value="3"/>
+        <env name="GARAGE_EINVOICE_DRIVER" value="log"/>
     </php>
 </phpunit>

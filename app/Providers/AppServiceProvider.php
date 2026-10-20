@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\EInvoice\EInvoiceGateway;
+use App\EInvoice\LogEInvoiceGateway;
+use App\EInvoice\UnconfiguredEInvoiceGateway;
 use App\Messaging\LogMessageGateway;
 use App\Messaging\MessageGateway;
 use App\Messaging\UnconfiguredMessageGateway;
+use App\Messaging\ZaloZnsGateway;
 use App\Models\Invoice;
 use App\Models\Part;
 use App\Models\Service;
@@ -29,7 +33,17 @@ class AppServiceProvider extends ServiceProvider
 
             return match ($driver) {
                 'log' => new LogMessageGateway,
+                'zalo_zns' => new ZaloZnsGateway,
                 default => new UnconfiguredMessageGateway($driver),
+            };
+        });
+
+        $this->app->bind(EInvoiceGateway::class, function (): EInvoiceGateway {
+            $driver = (string) config('garage.einvoice.driver', 'log');
+
+            return match ($driver) {
+                'log' => new LogEInvoiceGateway,
+                default => new UnconfiguredEInvoiceGateway($driver),
             };
         });
     }

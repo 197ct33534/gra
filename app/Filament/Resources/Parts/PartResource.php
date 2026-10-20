@@ -107,6 +107,15 @@ class PartResource extends Resource
                     ->label('Vị trí kệ kho')
                     ->maxLength(255)
                     ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? $state : null),
+                TextInput::make('warranty_months')
+                    ->label('BH (tháng)')
+                    ->numeric()
+                    ->minValue(0)
+                    ->helperText('Để trống = dùng mặc định gara.'),
+                TextInput::make('warranty_km')
+                    ->label('BH (km)')
+                    ->numeric()
+                    ->minValue(0),
             ]);
     }
 

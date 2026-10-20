@@ -81,6 +81,17 @@ class CustomerResource extends Resource
                     ->label('Mã số thuế')
                     ->maxLength(20)
                     ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? $state : null),
+                Toggle::make('messaging_opt_in')
+                    ->label('Đồng ý nhận tin Zalo/SMS')
+                    ->helperText('Bắt buộc để gửi nhắc bảo dưỡng / lịch hẹn.')
+                    ->inline(false)
+                    ->live()
+                    ->afterStateUpdated(function ($state, callable $set): void {
+                        if ($state) {
+                            $set('messaging_opt_in_at', now());
+                            $set('messaging_opt_in_source', 'manual');
+                        }
+                    }),
                 Toggle::make('reminder_opt_out')
                     ->label('Không nhận tin nhắc bảo dưỡng')
                     ->helperText('Khách vẫn nhận tin báo đã nhận tiền.')

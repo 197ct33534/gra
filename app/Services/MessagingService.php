@@ -75,6 +75,10 @@ class MessagingService
             throw new DomainException("Khách {$customer->name} đã từ chối nhận tin nhắc.");
         }
 
+        if (! $customer->messaging_opt_in) {
+            throw new DomainException("Khách {$customer->name} chưa đồng ý nhận tin (opt-in).");
+        }
+
         $phone = self::normalizePhone($customer->phone);
 
         if ($phone === null) {
@@ -159,6 +163,10 @@ class MessagingService
 
     public function deliver(CustomerMessage $message): bool
     {
+        $maxAttempts = max(1, (int) config('garage.messaging_retry.max_attempts', 3));
+        $message->attempts = (int) $message->attempts + 1;
+        $message->last_attempt_at = now();
+
         try {
             $message->provider_message_id = $this->gateway->send($message);
             $message->status = CustomerMessageStatus::Sent;
@@ -168,12 +176,37 @@ class MessagingService
 
             return true;
         } catch (MessageDeliveryException $exception) {
-            $message->status = CustomerMessageStatus::Failed;
             $message->error = mb_substr($exception->getMessage(), 0, 250);
+
+            if ($message->attempts >= $maxAttempts) {
+                $message->status = CustomerMessageStatus::Failed;
+            } else {
+                // Giữ pending để lần schedule sau thử lại.
+                $message->status = CustomerMessageStatus::Pending;
+                $message->scheduled_at = now()->addMinutes(5 * $message->attempts);
+            }
+
             $message->save();
 
             return false;
         }
+    }
+
+    public function retry(CustomerMessage $message): CustomerMessage
+    {
+        if ($message->status !== CustomerMessageStatus::Failed
+            && $message->status !== CustomerMessageStatus::Pending) {
+            throw new DomainException('Chỉ gửi lại tin đang chờ hoặc thất bại.');
+        }
+
+        $message->status = CustomerMessageStatus::Pending;
+        $message->scheduled_at = now();
+        $message->error = null;
+        $message->save();
+
+        $this->deliver($message->fresh() ?? $message);
+
+        return $message->fresh() ?? $message;
     }
 
     public function reminderBody(Vehicle $vehicle): string

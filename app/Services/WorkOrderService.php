@@ -566,6 +566,8 @@ class WorkOrderService
             $locked->delivered_at = now();
             $locked->save();
 
+            app(WarrantyService::class)->issueCardsForDelivery($locked->fresh(['items', 'vehicle.customer']) ?? $locked);
+
             return $warnings;
         });
 

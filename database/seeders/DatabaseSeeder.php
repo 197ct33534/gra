@@ -330,7 +330,12 @@ class DatabaseSeeder extends Seeder
         foreach ($records as $record) {
             $customer = Customer::query()->updateOrCreate(
                 ['phone' => $record['customer']['phone']],
-                $record['customer'],
+                [
+                    ...$record['customer'],
+                    'messaging_opt_in' => true,
+                    'messaging_opt_in_at' => now(),
+                    'messaging_opt_in_source' => 'seed',
+                ],
             );
 
             $vehicle = Vehicle::query()->where('license_plate', $record['vehicle']['license_plate'])->first();
@@ -483,6 +488,9 @@ class DatabaseSeeder extends Seeder
                 'customer_type' => CustomerType::Individual,
                 'address' => '88 Lê Văn Lương, Quận 7, TP.HCM',
                 'tax_code' => null,
+                'messaging_opt_in' => true,
+                'messaging_opt_in_at' => now(),
+                'messaging_opt_in_source' => 'seed',
             ],
         );
         $dueVehicle = Vehicle::query()->where('license_plate', '51G-246.80')->first();

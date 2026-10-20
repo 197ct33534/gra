@@ -21,6 +21,8 @@ enum ActivityEvent: string implements HasColor, HasLabel
     case CatalogPriceChanged = 'catalog_price_changed';
     case GoodsReceived = 'goods_received';
     case StocktakeApplied = 'stocktake_applied';
+    case EInvoiceIssued = 'einvoice_issued';
+    case EInvoiceCanceled = 'einvoice_canceled';
 
     public function getLabel(): string
     {
@@ -39,16 +41,18 @@ enum ActivityEvent: string implements HasColor, HasLabel
             self::CatalogPriceChanged => 'Sửa bảng giá',
             self::GoodsReceived => 'Nhập kho từ NCC',
             self::StocktakeApplied => 'Áp dụng phiếu kiểm kê',
+            self::EInvoiceIssued => 'Xuất HĐĐT',
+            self::EInvoiceCanceled => 'Hủy HĐĐT',
         };
     }
 
     public function getColor(): string
     {
         return match ($this) {
-            self::BelowCatalog, self::ItemDeleted, self::OrderDeleted, self::InvoiceDeleted, self::StockAdjusted, self::StocktakeApplied => 'danger',
+            self::BelowCatalog, self::ItemDeleted, self::OrderDeleted, self::InvoiceDeleted, self::StockAdjusted, self::StocktakeApplied, self::EInvoiceCanceled => 'danger',
             self::PriceChanged, self::DiscountChanged, self::CatalogPriceChanged => 'warning',
             self::ItemDeclined => 'purple',
-            self::InvoiceIssued, self::PaymentRecorded, self::GoodsReceived => 'success',
+            self::InvoiceIssued, self::PaymentRecorded, self::GoodsReceived, self::EInvoiceIssued => 'success',
             self::StatusChanged => 'gray',
         };
     }
