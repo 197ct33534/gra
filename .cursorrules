@@ -1,0 +1,17 @@
+# Quản lý Gara Ô tô
+
+## Tech stack
+- Laravel 12 (`laravel/framework` ^12), PHP 8.3+.
+- Filament v5 (`filament/filament` ^5). Resource dùng `form(Schema $schema): Schema`, `infolist(Schema $schema): Schema`, `table(Table $table): Table`.
+- Spatie MediaLibrary (`spatie/laravel-medialibrary`) cho ảnh hiện trạng tiếp nhận xe.
+- DomPDF (`barryvdh/laravel-dompdf`) cho hóa đơn và phiếu in.
+- VietQR qua `simplesoftwareio/simple-qrcode`.
+
+Đặc tả khởi tạo ghi Laravel 11 và Filament v3. Code mới bám API đang cài trong `composer.json`, gồm Schema API của Filament v5.
+
+## Nguyên tắc cơ sở dữ liệu
+Mọi giao dịch trừ kho hoặc đổi trạng thái Work Order phải nằm trong `DB::transaction()` và dùng `lockForUpdate()` khi đọc hoặc ghi bản ghi phụ tùng (`parts`).
+
+## PHP và Filament
+- Tuân thủ cấu trúc Filament v5: Panel, Resource, Page, Widget, Schema, Table.
+- Khai báo đầy đủ type hint cho tham số và return type cho mọi method.

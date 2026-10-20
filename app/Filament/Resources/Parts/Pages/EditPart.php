@@ -1,0 +1,43 @@
+<?php
+
+namespace App\Filament\Resources\Parts\Pages;
+
+use App\Filament\Resources\Parts\PartResource;
+use App\Models\Part;
+use App\Services\InventoryService;
+use Filament\Actions\DeleteAction;
+use Filament\Resources\Pages\EditRecord;
+use Illuminate\Database\Eloquent\Model;
+
+class EditPart extends EditRecord
+{
+    protected static string $resource = PartResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            DeleteAction::make(),
+        ];
+    }
+
+    /**
+     * Tồn kho không được ghi thẳng: đi qua phiếu điều chỉnh kiểm kê để có dấu vết trên thẻ kho.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function handleRecordUpdate(Model $record, array $data): Model
+    {
+        if ($record instanceof Part && array_key_exists('stock_quantity', $data)) {
+            app(InventoryService::class)->adjustStock(
+                $record,
+                (int) $data['stock_quantity'],
+                (int) auth()->id(),
+                $this->data['adjustment_reason'] ?? null,
+            );
+        }
+
+        unset($data['stock_quantity']);
+
+        return parent::handleRecordUpdate($record, $data);
+    }
+}
