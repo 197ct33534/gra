@@ -378,11 +378,26 @@ class WorkOrderResource extends Resource
                                 ->hidden(fn (Get $get): bool => self::isCustomerSupplied($get('item_source'))
                                     || ! User::currentCanSeeMoney()
                                     || (! User::currentCanSeeCosts() && self::sourceValue($get('item_source')) === WorkOrderItemSource::Stock->value)),
+                            Select::make('supplier_id')
+                                ->label('Nhà cung cấp')
+                                ->relationship(
+                                    'supplier',
+                                    'name',
+                                    fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->active()->orderBy('name'),
+                                )
+                                ->getOptionLabelFromRecordUsing(fn ($record): string => $record->displayLabel())
+                                ->searchable()
+                                ->preload()
+                                ->native(false)
+                                ->visible(fn (Get $get): bool => in_array(self::sourceValue($get('item_source')), [
+                                    WorkOrderItemSource::DirectPurchase->value,
+                                    WorkOrderItemSource::Subcontract->value,
+                                ], true)),
                             TextInput::make('supplier_info')
                                 ->label(fn (Get $get): string => self::sourceValue($get('item_source')) === WorkOrderItemSource::Subcontract->value
-                                    ? 'Xưởng gia công'
-                                    : 'Nơi mua')
-                                ->placeholder('VD: Chợ phụ tùng Kim Biên, anh Hùng tiện láng')
+                                    ? 'Ghi chú xưởng gia công'
+                                    : 'Ghi chú nơi mua')
+                                ->placeholder('VD: anh Hùng giao tận nơi, CK trước')
                                 ->maxLength(255)
                                 ->visible(fn (Get $get): bool => in_array(self::sourceValue($get('item_source')), [
                                     WorkOrderItemSource::DirectPurchase->value,
@@ -1083,6 +1098,7 @@ class WorkOrderResource extends Resource
             'discount_amount' => 0,
             'subtotal' => 0,
             'cost_price' => 0,
+            'supplier_id' => null,
             'supplier_info' => null,
             'warranty_policy' => null,
             'technician_id' => null,

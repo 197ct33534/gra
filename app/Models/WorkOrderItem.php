@@ -33,6 +33,7 @@ class WorkOrderItem extends Model
         'unit_price',
         'cost_price',
         'supplier_info',
+        'supplier_id',
         'warranty_policy',
         'revision_no',
         'finding_note',
@@ -73,6 +74,11 @@ class WorkOrderItem extends Model
     public function workOrder(): BelongsTo
     {
         return $this->belongsTo(WorkOrder::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
     }
 
     public function technician(): BelongsTo

@@ -14,6 +14,7 @@ use App\Models\Part;
 use App\Models\PartCategory;
 use App\Models\Service;
 use App\Models\ServicePackage;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
@@ -35,9 +36,42 @@ class DatabaseSeeder extends Seeder
         $this->seedParts($categories);
         $this->seedServices();
         $this->seedServicePackages();
+        $this->seedSuppliers();
         $this->seedCustomersAndVehicles();
         $this->seedWorkOrders();
         $this->seedShowcase();
+    }
+
+    private function seedSuppliers(): void
+    {
+        $suppliers = [
+            [
+                'code' => 'NCC-KIMBIEN',
+                'name' => 'Chợ phụ tùng Kim Biên',
+                'phone' => '0909888777',
+                'tax_code' => null,
+                'address' => 'Đường Nguyễn Thị Minh Khai, Q.1, TP.HCM',
+                'payment_terms_days' => 0,
+            ],
+            [
+                'code' => 'NCC-CASTROL',
+                'name' => 'Đại lý nhớt Castrol miền Nam',
+                'phone' => '02839998888',
+                'tax_code' => '0301234567',
+                'address' => 'KCN Tân Bình, TP.HCM',
+                'payment_terms_days' => 15,
+                'bank_name' => 'Vietcombank',
+                'bank_account_no' => '0071000123456',
+                'bank_account_name' => 'CTY CASTROL MN',
+            ],
+        ];
+
+        foreach ($suppliers as $supplier) {
+            Supplier::query()->updateOrCreate(
+                ['code' => $supplier['code']],
+                [...$supplier, 'is_active' => true],
+            );
+        }
     }
 
     private function seedUsers(): void

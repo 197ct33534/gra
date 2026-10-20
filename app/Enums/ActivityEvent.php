@@ -19,6 +19,7 @@ enum ActivityEvent: string implements HasColor, HasLabel
     case InvoiceDeleted = 'invoice_deleted';
     case StockAdjusted = 'stock_adjusted';
     case CatalogPriceChanged = 'catalog_price_changed';
+    case GoodsReceived = 'goods_received';
 
     public function getLabel(): string
     {
@@ -35,6 +36,7 @@ enum ActivityEvent: string implements HasColor, HasLabel
             self::InvoiceDeleted => 'Xóa hóa đơn',
             self::StockAdjusted => 'Chỉnh tồn kho tay',
             self::CatalogPriceChanged => 'Sửa bảng giá',
+            self::GoodsReceived => 'Nhập kho từ NCC',
         };
     }
 
@@ -44,7 +46,7 @@ enum ActivityEvent: string implements HasColor, HasLabel
             self::BelowCatalog, self::ItemDeleted, self::OrderDeleted, self::InvoiceDeleted, self::StockAdjusted => 'danger',
             self::PriceChanged, self::DiscountChanged, self::CatalogPriceChanged => 'warning',
             self::ItemDeclined => 'purple',
-            self::InvoiceIssued, self::PaymentRecorded => 'success',
+            self::InvoiceIssued, self::PaymentRecorded, self::GoodsReceived => 'success',
             self::StatusChanged => 'gray',
         };
     }

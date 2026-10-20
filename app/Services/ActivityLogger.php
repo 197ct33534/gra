@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\ActivityEvent;
 use App\Models\ActivityLog;
+use App\Models\GoodsReceipt;
 use App\Models\Invoice;
 use App\Models\Part;
+use App\Models\PurchaseOrder;
 use App\Models\Service;
 use App\Models\WorkOrder;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +37,7 @@ class ActivityLogger
             $subject instanceof Invoice => $subject->invoice_number,
             $subject instanceof Part => $subject->sku,
             $subject instanceof Service => $subject->code,
+            $subject instanceof PurchaseOrder, $subject instanceof GoodsReceipt => $subject->code,
             default => null,
         };
     }

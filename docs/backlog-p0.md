@@ -21,6 +21,13 @@
 
 **Thứ tự khuyến nghị:** H (hạ tầng song song) → C → D → A → G → B → E → F.
 
+### Tiến độ triển khai
+
+| Ticket | Trạng thái | Ghi chú |
+|--------|------------|---------|
+| P0-C-01 → P0-C-05 | ✅ Done (2026-10-20) | Module Mua hàng: NCC, PO, phiếu nhập, công nợ AP, gắn `supplier_id` trên RO |
+| P0-H / còn lại | ⏳ Pending | |
+
 ---
 
 ## A. Hóa đơn điện tử (HĐĐT)

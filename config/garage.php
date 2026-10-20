@@ -35,4 +35,9 @@ return [
         fn (int $bay): string => 'Cầu '.$bay,
         range(1, max(1, (int) env('GARAGE_LIFT_BAYS', 6))),
     ),
+    'purchasing' => [
+        // weighted_average = bình quân gia quyền; last_purchase = lấy giá lần nhập mới nhất.
+        'cost_method' => env('GARAGE_COST_METHOD', 'weighted_average'),
+        'default_vat_rate' => (int) env('GARAGE_PURCHASE_VAT_RATE', 8),
+    ],
 ];
