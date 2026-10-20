@@ -97,6 +97,14 @@ class WorkOrderService
                 throw new DomainException('Số tiền đã thu vượt quá số tiền phải trả ('.VietnameseMoney::format($total).').');
             }
 
+            $vatRate = (int) $locked->vat_rate;
+            $amountBeforeVat = $vatRate > 0 ? round($total / (1 + $vatRate / 100), 2) : $total;
+            $vatAmount = round($total - $amountBeforeVat, 2);
+
+            if ($method === PaymentMethod::Cash && $paid > 0) {
+                $this->assertCashSessionReady($paid);
+            }
+
             $invoice = Invoice::query()->create([
                 'invoice_number' => $this->reserveInvoiceNumber(),
                 'work_order_id' => $locked->id,
@@ -107,7 +115,14 @@ class WorkOrderService
                 'payment_method' => $method,
                 'payment_status' => Invoice::statusFor($total, $paid),
                 'notes' => filled($notes) ? $notes : null,
+                'vat_rate' => $vatRate,
+                'amount_before_vat' => $amountBeforeVat,
+                'vat_amount' => $vatAmount,
             ]);
+
+            if ($method === PaymentMethod::Cash && $paid > 0) {
+                $this->postCashPayment($invoice, $paid);
+            }
 
             $locked->status = WorkOrderStatus::Completed;
             $locked->save();
@@ -142,6 +157,10 @@ class WorkOrderService
                 throw new DomainException('Số tiền thu vượt quá công nợ còn lại ('.VietnameseMoney::format($outstanding).').');
             }
 
+            if ($locked->payment_method === PaymentMethod::Cash) {
+                $this->assertCashSessionReady($received);
+            }
+
             $paid = round((float) $locked->paid_amount + $received, 2);
             $locked->paid_amount = $paid;
             $locked->payment_status = Invoice::statusFor((float) $locked->total_amount, $paid);
@@ -153,12 +172,43 @@ class WorkOrderService
 
             $locked->save();
 
+            if ($locked->payment_method === PaymentMethod::Cash) {
+                $this->postCashPayment($locked, $received);
+            }
+
             return $locked;
         });
 
         $invoice->refresh();
 
         return $updated;
+    }
+
+    private function assertCashSessionReady(float $amount): void
+    {
+        if (! config('garage.cash.require_open_session_for_cash', true)) {
+            return;
+        }
+
+        // Chỉ kiểm tra ca mở; ghi quỹ sau khi invoice được lưu.
+        app(CashService::class)->requireOpenSession();
+        unset($amount);
+    }
+
+    private function postCashPayment(Invoice $invoice, float $amount): void
+    {
+        if (! config('garage.cash.require_open_session_for_cash', true)) {
+            return;
+        }
+
+        $userId = User::current()?->id;
+
+        if ($userId === null) {
+            // Seeder / console: bỏ qua ghi quỹ nếu không có user đăng nhập.
+            return;
+        }
+
+        app(CashService::class)->recordInvoiceCashPayment($invoice, $amount, $userId);
     }
 
     public function nextCode(): string

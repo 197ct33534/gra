@@ -40,4 +40,13 @@ return [
         'cost_method' => env('GARAGE_COST_METHOD', 'weighted_average'),
         'default_vat_rate' => (int) env('GARAGE_PURCHASE_VAT_RATE', 8),
     ],
+    'appointments' => [
+        'default_duration_minutes' => (int) env('GARAGE_APPOINTMENT_MINUTES', 60),
+        'bay_buffer_minutes' => (int) env('GARAGE_BAY_BUFFER_MINUTES', 15),
+        'remind_before_hours' => (int) env('GARAGE_APPOINTMENT_REMIND_HOURS', 24),
+    ],
+    'cash' => [
+        // true = bắt buộc mở ca trước khi thu tiền mặt; false = bỏ qua ghi quỹ (không khuyến nghị).
+        'require_open_session_for_cash' => (bool) env('GARAGE_CASH_REQUIRE_SESSION', true),
+    ],
 ];

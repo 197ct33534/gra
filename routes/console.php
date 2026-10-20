@@ -14,3 +14,6 @@ Schedule::command('garage:send-messages')->everyFiveMinutes()->withoutOverlappin
 
 // Sao lưu DB + ảnh tiếp nhận lúc 2h sáng (giờ VN).
 Schedule::command('garage:backup')->dailyAt('02:00')->timezone('Asia/Ho_Chi_Minh')->withoutOverlapping();
+
+// Nhắc lịch hẹn trước X giờ (config garage.appointments.remind_before_hours).
+Schedule::command('garage:queue-appointment-reminders')->hourly()->timezone('Asia/Ho_Chi_Minh')->withoutOverlapping();

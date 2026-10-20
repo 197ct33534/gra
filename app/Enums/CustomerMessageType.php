@@ -8,12 +8,14 @@ enum CustomerMessageType: string implements HasLabel
 {
     case MaintenanceReminder = 'maintenance_reminder';
     case PaymentReceipt = 'payment_receipt';
+    case AppointmentReminder = 'appointment_reminder';
 
     public function getLabel(): string
     {
         return match ($this) {
             self::MaintenanceReminder => 'Nhắc bảo dưỡng',
             self::PaymentReceipt => 'Báo đã nhận tiền',
+            self::AppointmentReminder => 'Nhắc lịch hẹn',
         };
     }
 }

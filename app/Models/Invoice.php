@@ -24,6 +24,9 @@ class Invoice extends Model
         'payment_method',
         'payment_status',
         'notes',
+        'vat_rate',
+        'amount_before_vat',
+        'vat_amount',
     ];
 
     /**
@@ -44,6 +47,9 @@ class Invoice extends Model
             'payer_type' => InvoicePayer::class,
             'payment_method' => PaymentMethod::class,
             'payment_status' => PaymentStatus::class,
+            'vat_rate' => 'integer',
+            'amount_before_vat' => 'decimal:2',
+            'vat_amount' => 'decimal:2',
         ];
     }
 
