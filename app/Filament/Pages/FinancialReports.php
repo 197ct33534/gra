@@ -58,7 +58,7 @@ class FinancialReports extends Page
     }
 
     /**
-     * @return array{aging: array, pnl: array}
+     * @return array{aging: array, ap: array, pnl: array}
      */
     public function getReport(): array
     {
@@ -66,6 +66,7 @@ class FinancialReports extends Page
 
         return [
             'aging' => $finance->agingReceivables(),
+            'ap' => $finance->agingPayables(),
             'pnl' => $finance->monthlyPnL($this->month),
         ];
     }

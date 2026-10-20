@@ -41,6 +41,7 @@ class WorkOrder extends Model implements HasMedia
         'customer_request',
         'technical_diagnosis',
         'checkin_checklist',
+        'body_inspection',
         'promised_at',
         'lift_bay',
         'status',
@@ -78,6 +79,7 @@ class WorkOrder extends Model implements HasMedia
             'insurance_claim_status' => InsuranceClaimStatus::class,
             'reception_odo' => 'integer',
             'checkin_checklist' => 'array',
+            'body_inspection' => 'array',
             'promised_at' => 'datetime',
             'status' => WorkOrderStatus::class,
             'needs_restock' => 'boolean',
@@ -110,6 +112,9 @@ class WorkOrder extends Model implements HasMedia
             ->acceptsMimeTypes([
                 'image/jpeg', 'image/png', 'image/webp', 'application/pdf',
             ]);
+
+        $this->addMediaCollection('body_inspection_photos')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp']);
     }
 
     public function vehicle(): BelongsTo

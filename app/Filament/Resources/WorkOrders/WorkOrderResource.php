@@ -279,7 +279,7 @@ class WorkOrderResource extends Resource
     }
 
     /**
-     * @return array<int, SpatieMediaLibraryFileUpload|CheckboxList>
+     * @return array<int, mixed>
      */
     public static function inspectionSchema(): array
     {
@@ -292,6 +292,45 @@ class WorkOrderResource extends Resource
                 ->imagePreviewHeight('160')
                 ->panelLayout('grid')
                 ->reorderable()
+                ->appendFiles()
+                ->columnSpanFull(),
+            Repeater::make('body_inspection')
+                ->label('Kiểm tra thân vỏ / vùng hư hại')
+                ->helperText('Ghi nhận xước, móp, nứt… trước khi sửa — khách và gara đối chiếu.')
+                ->schema([
+                    Select::make('zone')
+                        ->label('Vùng xe')
+                        ->options(\App\Support\BodyInspection::zones())
+                        ->required()
+                        ->native(false)
+                        ->searchable(),
+                    Select::make('condition')
+                        ->label('Tình trạng')
+                        ->options(\App\Support\BodyInspection::conditions())
+                        ->required()
+                        ->native(false)
+                        ->default('scratch'),
+                    TextInput::make('note')
+                        ->label('Ghi chú')
+                        ->maxLength(255)
+                        ->placeholder('VD: xước dài ~10cm gần đèn'),
+                ])
+                ->default([])
+                ->reorderable()
+                ->collapsible()
+                ->itemLabel(fn (array $state): ?string => filled($state['zone'] ?? null)
+                    ? \App\Support\BodyInspection::zoneLabel((string) $state['zone'])
+                        .' — '.\App\Support\BodyInspection::conditionLabel((string) ($state['condition'] ?? 'other'))
+                    : null)
+                ->addActionLabel('Thêm vùng hư hại')
+                ->columnSpanFull(),
+            SpatieMediaLibraryFileUpload::make('body_inspection_photos')
+                ->label('Ảnh thân vỏ theo vùng')
+                ->collection('body_inspection_photos')
+                ->multiple()
+                ->image()
+                ->imagePreviewHeight('140')
+                ->panelLayout('grid')
                 ->appendFiles()
                 ->columnSpanFull(),
             SpatieMediaLibraryFileUpload::make('insurance_docs')

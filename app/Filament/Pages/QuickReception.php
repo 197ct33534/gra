@@ -141,6 +141,11 @@ class QuickReception extends Page
                             ->options(WorkOrderResource::CHECKIN_ITEMS)
                             ->default(array_keys(WorkOrderResource::CHECKIN_ITEMS))
                             ->columns(2),
+                        CheckboxList::make('body_damage_zones')
+                            ->label('Vùng thân vỏ có hư hại (tick nhanh)')
+                            ->options(\App\Support\BodyInspection::zones())
+                            ->columns(3)
+                            ->helperText('Chi tiết tình trạng chỉnh lại trên lệnh sửa nếu cần.'),
                         SpatieMediaLibraryFileUpload::make('reception_photos')
                             ->label('Ảnh hiện trạng (chụp liên tục, không cần đặt tên)')
                             ->collection('reception_photos')

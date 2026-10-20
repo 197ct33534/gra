@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     @php($report = $this->getReport())
     @php($aging = $report['aging'])
+    @php($ap = $report['ap'])
     @php($pnl = $report['pnl'])
 
     <style>
@@ -47,6 +48,42 @@
                     </tr>
                 @empty
                     <tr><td colspan="4" style="opacity:.65">Không còn công nợ phải thu.</td></tr>
+                @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-filament::section>
+
+    <x-filament::section icon="heroicon-o-truck">
+        <x-slot name="heading">Aging công nợ phải trả NCC — tổng {{ \App\Filament\Pages\FinancialReports::money($ap['total']) }}</x-slot>
+        <div class="fr-grid">
+            @foreach ($ap['buckets'] as $bucket)
+                <div class="fr-stat">
+                    <div class="lbl">{{ $bucket['label'] }} ({{ $bucket['count'] }} phiếu)</div>
+                    <div class="val">{{ \App\Filament\Pages\FinancialReports::money($bucket['amount']) }}</div>
+                </div>
+            @endforeach
+        </div>
+        <div style="overflow-x:auto">
+            <table class="fr-table">
+                <thead>
+                <tr>
+                    <th>Phiếu nợ</th>
+                    <th>NCC</th>
+                    <th class="num">Tuổi nợ</th>
+                    <th class="num">Còn phải trả</th>
+                </tr>
+                </thead>
+                <tbody>
+                @forelse ($ap['rows'] as $row)
+                    <tr>
+                        <td>{{ $row['bill']->bill_number ?? ('#'.$row['bill']->id) }}</td>
+                        <td>{{ $row['bill']->supplier?->name ?? '—' }}</td>
+                        <td class="num">{{ $row['days'] }} ngày</td>
+                        <td class="num">{{ \App\Filament\Pages\FinancialReports::money($row['outstanding']) }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="4" style="opacity:.65">Không còn công nợ NCC.</td></tr>
                 @endforelse
                 </tbody>
             </table>

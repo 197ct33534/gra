@@ -169,6 +169,47 @@ class MessagingService
         ]);
     }
 
+    public function queueFeedbackRequest(WorkOrder $order): ?CustomerMessage
+    {
+        $order->loadMissing('vehicle.customer');
+        $customer = $order->vehicle?->customer;
+        $phone = self::normalizePhone($customer?->phone);
+
+        if (! $customer instanceof Customer || $phone === null || ! $customer->messaging_opt_in) {
+            return null;
+        }
+
+        if ($order->delivered_at === null || $order->feedback_at !== null) {
+            return null;
+        }
+
+        $exists = CustomerMessage::query()
+            ->where('work_order_id', $order->id)
+            ->where('type', CustomerMessageType::FeedbackRequest)
+            ->exists();
+
+        if ($exists) {
+            return null;
+        }
+
+        $url = app(CustomerPortalService::class)->feedbackUrl($order);
+        $body = config('garage.name').' cảm ơn quý khách đã tin tưởng (xe '
+            .($order->vehicle?->license_plate ?? '').'). '
+            .'Cho gara xin 30 giây đánh giá: '.$url;
+
+        return CustomerMessage::query()->create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $order->vehicle_id,
+            'work_order_id' => $order->id,
+            'type' => CustomerMessageType::FeedbackRequest,
+            'channel' => (string) config('garage.messaging.channel', 'zalo'),
+            'phone' => $phone,
+            'body' => $body,
+            'status' => CustomerMessageStatus::Pending,
+            'scheduled_at' => now(),
+        ]);
+    }
+
     public function queuePaymentReceipt(Invoice $invoice, float $received): ?CustomerMessage
     {
         $invoice->loadMissing('workOrder.vehicle.customer');

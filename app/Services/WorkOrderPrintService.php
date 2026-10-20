@@ -112,6 +112,9 @@ class WorkOrderPrintService
             'odo' => number_format((int) $workOrder->reception_odo, 0, ',', '.').' km',
             'promisedAt' => $workOrder->promised_at?->timezone(config('garage.timezone'))->format('H:i — d/m/Y'),
             'lines' => $lines,
+            'bodyInspection' => \App\Support\BodyInspection::summaryLines(
+                is_array($workOrder->body_inspection) ? $workOrder->body_inspection : null
+            ),
         ];
     }
 

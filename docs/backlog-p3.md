@@ -8,7 +8,7 @@
 |--------|--------|--------|
 | P3-01 | Đổi điểm loyalty trên hóa đơn | ✅ |
 | P3-02 | Tin nhắn khi đổi trạng thái RO | ✅ |
-| P3-03 | Kiểm tra thân vỏ số hóa (zone) | ⏳ |
+| P3-03 | Kiểm tra thân vỏ số hóa (zone) | ✅ |
 | P3-04 | Báo cáo NPS / điểm TB | ✅ |
 
 ---

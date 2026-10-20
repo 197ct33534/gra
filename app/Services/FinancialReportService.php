@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentStatus;
 use App\Enums\WorkOrderStatus;
 use App\Models\Invoice;
+use App\Models\SupplierBill;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
 use Illuminate\Support\Carbon;
@@ -146,5 +147,65 @@ class FinancialReportService
             ->with(['workOrder.vehicle.customer'])
             ->orderBy('created_at')
             ->get();
+    }
+
+    /**
+     * Aging công nợ phải trả NCC.
+     *
+     * @return array{
+     *     buckets: array<string, array{label: string, count: int, amount: float}>,
+     *     total: float,
+     *     rows: list<array{bill: SupplierBill, days: int, bucket: string, outstanding: float}>
+     * }
+     */
+    public function agingPayables(?Carbon $asOf = null): array
+    {
+        $asOf ??= now();
+
+        $buckets = [
+            '0_30' => ['label' => '0–30 ngày', 'count' => 0, 'amount' => 0.0],
+            '31_60' => ['label' => '31–60 ngày', 'count' => 0, 'amount' => 0.0],
+            '61_90' => ['label' => '61–90 ngày', 'count' => 0, 'amount' => 0.0],
+            '90_plus' => ['label' => 'Trên 90 ngày', 'count' => 0, 'amount' => 0.0],
+        ];
+
+        $bills = SupplierBill::query()
+            ->open()
+            ->with('supplier')
+            ->orderBy('created_at')
+            ->get();
+
+        $rows = [];
+        $total = 0.0;
+
+        foreach ($bills as $bill) {
+            $outstanding = $bill->outstandingAmount();
+            if ($outstanding <= 0) {
+                continue;
+            }
+
+            $days = (int) $bill->created_at->diffInDays($asOf);
+            $bucket = match (true) {
+                $days <= 30 => '0_30',
+                $days <= 60 => '31_60',
+                $days <= 90 => '61_90',
+                default => '90_plus',
+            };
+
+            $buckets[$bucket]['count']++;
+            $buckets[$bucket]['amount'] = round($buckets[$bucket]['amount'] + $outstanding, 2);
+            $total = round($total + $outstanding, 2);
+
+            $rows[] = [
+                'bill' => $bill,
+                'days' => $days,
+                'bucket' => $bucket,
+                'outstanding' => $outstanding,
+            ];
+        }
+
+        usort($rows, fn (array $a, array $b): int => $b['days'] <=> $a['days']);
+
+        return compact('buckets', 'total', 'rows');
     }
 }

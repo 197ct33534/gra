@@ -11,6 +11,7 @@ enum CustomerMessageType: string implements HasLabel
     case AppointmentReminder = 'appointment_reminder';
     case EInvoiceLink = 'einvoice_link';
     case StatusUpdate = 'status_update';
+    case FeedbackRequest = 'feedback_request';
 
     public function getLabel(): string
     {
@@ -20,6 +21,7 @@ enum CustomerMessageType: string implements HasLabel
             self::AppointmentReminder => 'Nhắc lịch hẹn',
             self::EInvoiceLink => 'Link HĐĐT',
             self::StatusUpdate => 'Cập nhật tiến độ RO',
+            self::FeedbackRequest => 'Mời đánh giá sau sửa',
         };
     }
 }

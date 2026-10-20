@@ -55,7 +55,7 @@ class QuickReceptionService
     }
 
     /**
-     * @param  array{license_plate: string, phone?: ?string, customer_name?: ?string, brand?: ?string, model?: ?string, reception_odo: int|string, fuel_level?: ?string, checkin_checklist?: list<string>, customer_request?: ?string, promised_at?: mixed, lift_bay?: ?string, package_ids?: list<int|string>}  $data
+     * @param  array{license_plate: string, phone?: ?string, customer_name?: ?string, brand?: ?string, model?: ?string, reception_odo: int|string, fuel_level?: ?string, checkin_checklist?: list<string>, body_damage_zones?: list<string>, customer_request?: ?string, promised_at?: mixed, lift_bay?: ?string, package_ids?: list<int|string>}  $data
      */
     public function receive(array $data, int $userId): WorkOrder
     {
@@ -79,6 +79,18 @@ class QuickReceptionService
                 $vehicle = $this->createVehicle($plate, $odo, $data);
             }
 
+            $bodyInspection = [];
+            foreach (array_values($data['body_damage_zones'] ?? []) as $zone) {
+                if (! is_string($zone) || $zone === '') {
+                    continue;
+                }
+                $bodyInspection[] = [
+                    'zone' => $zone,
+                    'condition' => 'other',
+                    'note' => 'Ghi nhận lúc tiếp nhận nhanh',
+                ];
+            }
+
             $order = WorkOrder::query()->create([
                 'code' => $this->workOrders->nextCode(),
                 'vehicle_id' => $vehicle->id,
@@ -88,6 +100,7 @@ class QuickReceptionService
                 'fuel_level' => $data['fuel_level'] ?? null,
                 'customer_request' => filled($data['customer_request'] ?? null) ? trim((string) $data['customer_request']) : null,
                 'checkin_checklist' => array_values($data['checkin_checklist'] ?? []),
+                'body_inspection' => $bodyInspection !== [] ? $bodyInspection : null,
                 'promised_at' => $data['promised_at'] ?? null,
                 'lift_bay' => filled($data['lift_bay'] ?? null) ? $data['lift_bay'] : null,
                 'status' => WorkOrderStatus::Reception,

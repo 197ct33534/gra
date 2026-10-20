@@ -48,6 +48,18 @@
         </div>
     </div>
 
+    @php($bodyLines = \App\Support\BodyInspection::summaryLines(is_array($order->body_inspection) ? $order->body_inspection : null))
+    @if($bodyLines !== [])
+        <div class="card">
+            <p style="font-weight:600;margin-top:0">Hiện trạng thân vỏ đã ghi nhận</p>
+            <ul style="margin:0;padding-left:18px">
+                @foreach($bodyLines as $line)
+                    <li>{{ $line }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @if($showMoney && $order->final_amount !== null)
         <div class="card">
             <p class="muted" style="margin:0">Tổng ước tính (tham khảo)</p>

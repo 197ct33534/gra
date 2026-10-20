@@ -579,6 +579,7 @@ class WorkOrderService
             app(CustomerPortalService::class)->ensureFeedbackToken($delivered);
             app(CustomerPortalService::class)->ensureStatusToken($delivered);
             app(LoyaltyService::class)->earnFromDelivery($delivered, $userId);
+            app(MessagingService::class)->queueFeedbackRequest($delivered);
 
             return $warnings;
         });

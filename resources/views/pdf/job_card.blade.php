@@ -67,6 +67,15 @@
         <div class="diagnosis">{{ $workOrder->technical_diagnosis }}</div>
     @endif
 
+    @if (! empty($bodyInspection))
+        <div class="label">Hiện trạng thân vỏ khi nhận</div>
+        <div class="diagnosis">
+            @foreach ($bodyInspection as $line)
+                • {{ $line }}@if (! $loop->last)<br>@endif
+            @endforeach
+        </div>
+    @endif
+
     <div class="label">Công việc cần làm</div>
     <table class="jobs">
         <thead>
