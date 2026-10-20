@@ -94,6 +94,20 @@ class CustomerResource extends Resource
                     ->default(0)
                     ->visible(fn (Get $get): bool => $get('customer_type') === CustomerType::Company->value
                         || $get('customer_type') === CustomerType::Company),
+                TextInput::make('loyalty_points')
+                    ->label('Điểm loyalty')
+                    ->numeric()
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->visibleOn('edit'),
+                TextInput::make('loyalty_tier')
+                    ->label('Hạng thành viên')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->formatStateUsing(fn ($state): string => $state instanceof \App\Enums\LoyaltyTier
+                        ? $state->getLabel()
+                        : (string) ($state ?? 'Thành viên'))
+                    ->visibleOn('edit'),
                 Toggle::make('messaging_opt_in')
                     ->label('Đồng ý nhận tin Zalo/SMS')
                     ->helperText('Bắt buộc để gửi nhắc bảo dưỡng / lịch hẹn.')
@@ -135,6 +149,14 @@ class CustomerResource extends Resource
                     ->label('Số xe')
                     ->counts('vehicles')
                     ->sortable(),
+                TextColumn::make('loyalty_points')
+                    ->label('Điểm')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('loyalty_tier')
+                    ->label('Hạng')
+                    ->badge()
+                    ->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('customer_type')

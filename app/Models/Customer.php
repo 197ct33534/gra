@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CustomerType;
+use App\Enums\LoyaltyTier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -20,6 +21,8 @@ class Customer extends Model
         'tax_code',
         'credit_limit',
         'payment_terms_days',
+        'loyalty_points',
+        'loyalty_tier',
         'reminder_opt_out',
         'messaging_opt_in',
         'messaging_opt_in_at',
@@ -35,6 +38,8 @@ class Customer extends Model
             'customer_type' => CustomerType::class,
             'credit_limit' => 'decimal:2',
             'payment_terms_days' => 'integer',
+            'loyalty_points' => 'integer',
+            'loyalty_tier' => LoyaltyTier::class,
             'reminder_opt_out' => 'boolean',
             'messaging_opt_in' => 'boolean',
             'messaging_opt_in_at' => 'datetime',
@@ -49,6 +54,11 @@ class Customer extends Model
     public function fleetContracts(): HasMany
     {
         return $this->hasMany(FleetContract::class);
+    }
+
+    public function loyaltyTransactions(): HasMany
+    {
+        return $this->hasMany(LoyaltyTransaction::class);
     }
 
     public function activeFleetContract(): ?FleetContract

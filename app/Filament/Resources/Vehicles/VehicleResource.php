@@ -99,6 +99,15 @@ class VehicleResource extends Resource
             ->minValue(0)
             ->suffix('km')
             ->default(0);
+        $components[] = \Filament\Forms\Components\DatePicker::make('registration_expires_at')
+            ->label('Hạn đăng ký xe')
+            ->native(false);
+        $components[] = \Filament\Forms\Components\DatePicker::make('insurance_expires_at')
+            ->label('Hạn BH TNDS / vật chất')
+            ->native(false);
+        $components[] = \Filament\Forms\Components\DatePicker::make('inspection_expires_at')
+            ->label('Hạn đăng kiểm')
+            ->native(false);
         $components[] = TextInput::make('service_interval_km')
             ->label('Chu kỳ bảo dưỡng (km)')
             ->integer()

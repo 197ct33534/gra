@@ -65,4 +65,11 @@ return [
     'messaging_retry' => [
         'max_attempts' => (int) env('GARAGE_MESSAGING_MAX_ATTEMPTS', 3),
     ],
+    'loyalty' => [
+        // 1 điểm / bao nhiêu VND doanh thu khi bàn giao.
+        'vnd_per_point' => (int) env('GARAGE_LOYALTY_VND_PER_POINT', 10000),
+    ],
+    'vehicle_documents' => [
+        'warn_before_days' => (int) env('GARAGE_DOC_WARN_DAYS', 30),
+    ],
 ];

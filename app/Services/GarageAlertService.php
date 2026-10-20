@@ -8,8 +8,10 @@ use App\Enums\WorkOrderStatus;
 use App\Models\Appointment;
 use App\Models\Part;
 use App\Models\User;
+use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class GarageAlertService
@@ -56,9 +58,25 @@ class GarageAlertService
     }
 
     /**
-     * Gửi thông báo Filament (database) cho admin/cố vấn — mỗi key tối đa 1 lần / 12 giờ.
-     *
-     * @return array{late_ro: int, late_appt: int, low_stock: int}
+     * @return Collection<int, Vehicle>
+     */
+    public function expiringVehicleDocuments(): Collection
+    {
+        $days = max(1, (int) config('garage.vehicle_documents.warn_before_days', 30));
+        $until = now()->addDays($days)->toDateString();
+
+        return Vehicle::query()
+            ->with('customer')
+            ->where(function (Builder $q) use ($until): void {
+                $q->whereNotNull('registration_expires_at')->whereDate('registration_expires_at', '<=', $until)
+                    ->orWhere(fn (Builder $q2) => $q2->whereNotNull('insurance_expires_at')->whereDate('insurance_expires_at', '<=', $until))
+                    ->orWhere(fn (Builder $q2) => $q2->whereNotNull('inspection_expires_at')->whereDate('inspection_expires_at', '<=', $until));
+            })
+            ->get();
+    }
+
+    /**
+     * @return array{late_ro: int, late_appt: int, low_stock: int, expiring_docs: int}
      */
     public function dispatchDatabaseNotifications(): array
     {
@@ -66,7 +84,7 @@ class GarageAlertService
             ->whereIn('role', [UserRole::Admin, UserRole::ServiceAdvisor])
             ->get();
 
-        $sent = ['late_ro' => 0, 'late_appt' => 0, 'low_stock' => 0];
+        $sent = ['late_ro' => 0, 'late_appt' => 0, 'low_stock' => 0, 'expiring_docs' => 0];
 
         if ($recipients->isEmpty()) {
             return $sent;
@@ -121,6 +139,21 @@ class GarageAlertService
                     ->sendToDatabase($recipients);
 
                 $sent['low_stock'] = $low->count();
+            }
+        }
+
+        $docs = $this->expiringVehicleDocuments();
+        if ($docs->isNotEmpty()) {
+            $key = 'expiring_docs:'.now()->format('Y-m-d');
+            if ($this->claim($key)) {
+                $sample = $docs->take(5)->map(fn (Vehicle $v): string => $v->license_plate)->implode(', ');
+                Notification::make()
+                    ->title('Giấy tờ xe sắp hết hạn: '.$docs->count())
+                    ->body($sample.($docs->count() > 5 ? '…' : ''))
+                    ->warning()
+                    ->sendToDatabase($recipients);
+
+                $sent['expiring_docs'] = $docs->count();
             }
         }
 

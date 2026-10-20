@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
+use App\Services\CustomerPortalService;
 use App\Services\QuoteApprovalService;
 use App\Services\WorkOrderService;
 use App\Support\VietnameseMoney;
@@ -634,6 +635,8 @@ class WorkOrderResource extends Resource
                 self::printJobCardAction(),
                 self::printQuotationAction(),
                 self::copyQuoteLinkAction(),
+                self::copyStatusLinkAction(),
+                self::copyFeedbackLinkAction(),
                 self::createInvoiceAction(),
                 self::printInvoiceAction(),
                 self::printInsuranceInvoiceAction(),
@@ -693,6 +696,43 @@ class WorkOrderResource extends Resource
                 $url = app(QuoteApprovalService::class)->publicUrl($record->fresh() ?? $record);
                 Notification::make()
                     ->title('Link duyệt báo giá cho khách')
+                    ->body($url)
+                    ->success()
+                    ->persistent()
+                    ->send();
+            });
+    }
+
+    public static function copyStatusLinkAction(): Action
+    {
+        return Action::make('copyStatusLink')
+            ->authorize(fn (): bool => self::isOfficeUser())
+            ->label('Link theo dõi RO')
+            ->icon(Heroicon::OutlinedEye)
+            ->color('gray')
+            ->action(function (WorkOrder $record): void {
+                $url = app(CustomerPortalService::class)->statusUrl($record);
+                Notification::make()
+                    ->title('Link theo dõi cho khách')
+                    ->body($url)
+                    ->success()
+                    ->persistent()
+                    ->send();
+            });
+    }
+
+    public static function copyFeedbackLinkAction(): Action
+    {
+        return Action::make('copyFeedbackLink')
+            ->authorize(fn (): bool => self::isOfficeUser())
+            ->label('Link đánh giá')
+            ->icon(Heroicon::OutlinedStar)
+            ->color('warning')
+            ->visible(fn (WorkOrder $record): bool => $record->delivered_at !== null)
+            ->action(function (WorkOrder $record): void {
+                $url = app(CustomerPortalService::class)->feedbackUrl($record);
+                Notification::make()
+                    ->title('Link đánh giá sau sửa')
                     ->body($url)
                     ->success()
                     ->persistent()

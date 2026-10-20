@@ -35,6 +35,9 @@ class Vehicle extends Model implements HasMedia
         'model',
         'year',
         'current_odo',
+        'registration_expires_at',
+        'insurance_expires_at',
+        'inspection_expires_at',
         'service_interval_km',
         'service_interval_months',
     ];
@@ -47,6 +50,9 @@ class Vehicle extends Model implements HasMedia
         return [
             'year' => 'integer',
             'current_odo' => 'integer',
+            'registration_expires_at' => 'date',
+            'insurance_expires_at' => 'date',
+            'inspection_expires_at' => 'date',
             'service_interval_km' => 'integer',
             'service_interval_months' => 'integer',
         ];

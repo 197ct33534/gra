@@ -16,10 +16,11 @@ class DispatchGarageAlerts extends Command
         $sent = $alerts->dispatchDatabaseNotifications();
 
         $this->info(sprintf(
-            'Alerts: late RO=%d, late appt=%d, low stock=%d',
+            'Alerts: late RO=%d, late appt=%d, low stock=%d, docs=%d',
             $sent['late_ro'],
             $sent['late_appt'],
             $sent['low_stock'],
+            $sent['expiring_docs'] ?? 0,
         ));
 
         return self::SUCCESS;

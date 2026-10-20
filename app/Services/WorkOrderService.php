@@ -574,7 +574,11 @@ class WorkOrderService
             $locked->delivered_at = now();
             $locked->save();
 
-            app(WarrantyService::class)->issueCardsForDelivery($locked->fresh(['items', 'vehicle.customer']) ?? $locked);
+            $delivered = $locked->fresh(['items', 'vehicle.customer']) ?? $locked;
+            app(WarrantyService::class)->issueCardsForDelivery($delivered);
+            app(CustomerPortalService::class)->ensureFeedbackToken($delivered);
+            app(CustomerPortalService::class)->ensureStatusToken($delivered);
+            app(LoyaltyService::class)->earnFromDelivery($delivered, $userId);
 
             return $warnings;
         });

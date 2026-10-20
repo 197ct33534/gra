@@ -1,7 +1,10 @@
 <?php
 
 use App\Http\Controllers\BankWebhookController;
+use App\Http\Controllers\PublicBookingController;
+use App\Http\Controllers\PublicFeedbackController;
 use App\Http\Controllers\PublicQuoteController;
+use App\Http\Controllers\PublicStatusController;
 use App\Http\Controllers\WarrantyPdfController;
 use App\Http\Controllers\WorkOrderPdfController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -18,6 +21,17 @@ Route::post('/quote/{token}/approve', [PublicQuoteController::class, 'approve'])
 Route::post('/quote/{token}/reject', [PublicQuoteController::class, 'reject'])
     ->middleware('throttle:20,1')
     ->name('public.quote.reject');
+
+Route::get('/status/{token}', [PublicStatusController::class, 'show'])->name('public.status.show');
+Route::get('/feedback/{token}', [PublicFeedbackController::class, 'show'])->name('public.feedback.show');
+Route::post('/feedback/{token}', [PublicFeedbackController::class, 'store'])
+    ->middleware('throttle:20,1')
+    ->name('public.feedback.store');
+
+Route::get('/dat-lich', [PublicBookingController::class, 'create'])->name('public.booking.create');
+Route::post('/dat-lich', [PublicBookingController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('public.booking.store');
 
 // SePay gọi từ máy chủ của họ: không có phiên đăng nhập / CSRF, xác thực bằng khóa API trong header.
 Route::post('/webhooks/sepay', [BankWebhookController::class, 'sepay'])
