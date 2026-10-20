@@ -20,6 +20,7 @@ enum ActivityEvent: string implements HasColor, HasLabel
     case StockAdjusted = 'stock_adjusted';
     case CatalogPriceChanged = 'catalog_price_changed';
     case GoodsReceived = 'goods_received';
+    case StocktakeApplied = 'stocktake_applied';
 
     public function getLabel(): string
     {
@@ -37,13 +38,14 @@ enum ActivityEvent: string implements HasColor, HasLabel
             self::StockAdjusted => 'Chỉnh tồn kho tay',
             self::CatalogPriceChanged => 'Sửa bảng giá',
             self::GoodsReceived => 'Nhập kho từ NCC',
+            self::StocktakeApplied => 'Áp dụng phiếu kiểm kê',
         };
     }
 
     public function getColor(): string
     {
         return match ($this) {
-            self::BelowCatalog, self::ItemDeleted, self::OrderDeleted, self::InvoiceDeleted, self::StockAdjusted => 'danger',
+            self::BelowCatalog, self::ItemDeleted, self::OrderDeleted, self::InvoiceDeleted, self::StockAdjusted, self::StocktakeApplied => 'danger',
             self::PriceChanged, self::DiscountChanged, self::CatalogPriceChanged => 'warning',
             self::ItemDeclined => 'purple',
             self::InvoiceIssued, self::PaymentRecorded, self::GoodsReceived => 'success',

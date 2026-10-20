@@ -26,7 +26,9 @@
 | Ticket | Trạng thái | Ghi chú |
 |--------|------------|---------|
 | P0-C-01 → P0-C-05 | ✅ Done (2026-10-20) | Module Mua hàng: NCC, PO, phiếu nhập, công nợ AP, gắn `supplier_id` trên RO |
-| P0-H / còn lại | ⏳ Pending | |
+| P0-D-01 → P0-D-03 | ✅ Done (2026-10-20) | Phiếu kiểm kê snapshot → đếm → apply ledger + UI Filament |
+| P0-H-01 → P0-H-04 | ✅ Done (2026-10-20) | Docker Compose, CI Actions, `garage:backup`, docs/ops-stg.md |
+| P0-A / B / E / F / G | ⏳ Pending | |
 
 ---
 
