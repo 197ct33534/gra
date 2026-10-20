@@ -585,6 +585,7 @@ class WorkOrderService
         });
 
         $workOrder->refresh();
+        app(WebhookService::class)->dispatchDelivered($workOrder);
 
         return $warnings;
     }

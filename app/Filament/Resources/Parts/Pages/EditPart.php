@@ -5,7 +5,10 @@ namespace App\Filament\Resources\Parts\Pages;
 use App\Filament\Resources\Parts\PartResource;
 use App\Models\Part;
 use App\Services\InventoryService;
+use App\Services\PartCostHistoryService;
+use App\Support\VietnameseMoney;
 use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Database\Eloquent\Model;
 
@@ -18,6 +21,33 @@ class EditPart extends EditRecord
         return [
             DeleteAction::make(),
         ];
+    }
+
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+
+        if (! $this->getRecord() instanceof Part || ! \App\Models\User::currentCanSeeCosts()) {
+            return;
+        }
+
+        $summary = app(PartCostHistoryService::class)->summary($this->getRecord());
+        $trendLabel = match ($summary['trend']) {
+            'up' => '↗ tăng',
+            'down' => '↘ giảm',
+            default => '→ ổn định',
+        };
+
+        Notification::make()
+            ->title('Xu hướng giá vốn: '.$trendLabel)
+            ->body(
+                'Hiện tại '.VietnameseMoney::format($summary['current'])
+                .($summary['last'] !== null ? ' · nhập gần nhất '.VietnameseMoney::format($summary['last']) : '')
+                .($summary['avg'] !== null ? ' · TB '.VietnameseMoney::format($summary['avg']) : '')
+                .' ('.$summary['samples'].' lần nhập)'
+            )
+            ->info()
+            ->send();
     }
 
     /**

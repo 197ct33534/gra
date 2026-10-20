@@ -6,6 +6,7 @@ use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\Parts\Pages\CreatePart;
 use App\Filament\Resources\Parts\Pages\EditPart;
 use App\Filament\Resources\Parts\Pages\ListParts;
+use App\Filament\Resources\Parts\RelationManagers\CostHistoryRelationManager;
 use App\Models\Part;
 use App\Models\User;
 use App\Support\VietnameseMoney;
@@ -170,6 +171,13 @@ class PartResource extends Resource
                 ]),
             ])
             ->defaultSort('name');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            CostHistoryRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

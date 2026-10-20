@@ -81,4 +81,10 @@ return [
     'status_notify' => [
         'enabled' => (bool) env('GARAGE_STATUS_NOTIFY', true),
     ],
+    'webhooks' => [
+        // URL nhận POST JSON khi RO bàn giao (Zapier / Make / n8n…). Để trống = tắt.
+        'delivered_url' => env('GARAGE_WEBHOOK_DELIVERED_URL'),
+        // HMAC-SHA256 body → header X-Garage-Signature: sha256=<hex>
+        'secret' => env('GARAGE_WEBHOOK_SECRET'),
+    ],
 ];

@@ -68,6 +68,11 @@ class Part extends Model
         return $this->hasMany(StockTransaction::class);
     }
 
+    public function goodsReceiptItems(): HasMany
+    {
+        return $this->hasMany(GoodsReceiptItem::class);
+    }
+
     public function workOrderItems(): HasMany
     {
         return $this->hasMany(WorkOrderItem::class, 'item_id')

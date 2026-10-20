@@ -8,9 +8,9 @@
 |--------|--------|--------|
 | P4-01 | Aging AP (công nợ NCC) trên báo cáo | ✅ |
 | P4-02 | Mời đánh giá tự động khi bàn giao | ✅ |
-| P4-03 | Lịch sử giá NCC / last cost trend | ⏳ |
-| P4-04 | KPI cố vấn (doanh thu, conversion BG) | ⏳ |
-| P4-05 | Webhook / Zapier nhẹ (RO delivered) | ⏳ |
+| P4-03 | Lịch sử giá NCC / last cost trend | ✅ |
+| P4-04 | KPI cố vấn (doanh thu, conversion BG) | ✅ |
+| P4-05 | Webhook / Zapier nhẹ (RO delivered) | ✅ |
 
 ---
 
