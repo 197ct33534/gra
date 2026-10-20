@@ -105,6 +105,14 @@ class WorkOrderService
                 $this->assertCashSessionReady($paid);
             }
 
+            if ($payer === InvoicePayer::Customer && $paid + 0.001 < $total) {
+                $locked->loadMissing('vehicle.customer');
+                $customer = $locked->vehicle?->customer;
+                if ($customer instanceof \App\Models\Customer) {
+                    app(FleetService::class)->assertWithinCreditLimit($customer, round($total - $paid, 2));
+                }
+            }
+
             $invoice = Invoice::query()->create([
                 'invoice_number' => $this->reserveInvoiceNumber(),
                 'work_order_id' => $locked->id,

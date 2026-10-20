@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Customers;
 
 use App\Enums\CustomerType;
+use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\Customers\Pages\CreateCustomer;
 use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
@@ -18,6 +19,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -81,6 +83,17 @@ class CustomerResource extends Resource
                     ->label('Mã số thuế')
                     ->maxLength(20)
                     ->dehydrateStateUsing(fn (?string $state): ?string => filled($state) ? $state : null),
+                MoneyInput::make('credit_limit')
+                    ->label('Hạn mức công nợ')
+                    ->visible(fn (Get $get): bool => $get('customer_type') === CustomerType::Company->value
+                        || $get('customer_type') === CustomerType::Company),
+                TextInput::make('payment_terms_days')
+                    ->label('Kỳ hạn TT (ngày)')
+                    ->numeric()
+                    ->minValue(0)
+                    ->default(0)
+                    ->visible(fn (Get $get): bool => $get('customer_type') === CustomerType::Company->value
+                        || $get('customer_type') === CustomerType::Company),
                 Toggle::make('messaging_opt_in')
                     ->label('Đồng ý nhận tin Zalo/SMS')
                     ->helperText('Bắt buộc để gửi nhắc bảo dưỡng / lịch hẹn.')

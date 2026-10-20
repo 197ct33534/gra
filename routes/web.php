@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BankWebhookController;
+use App\Http\Controllers\PublicQuoteController;
 use App\Http\Controllers\WarrantyPdfController;
 use App\Http\Controllers\WorkOrderPdfController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -9,6 +10,14 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/quote/{token}', [PublicQuoteController::class, 'show'])->name('public.quote.show');
+Route::post('/quote/{token}/approve', [PublicQuoteController::class, 'approve'])
+    ->middleware('throttle:20,1')
+    ->name('public.quote.approve');
+Route::post('/quote/{token}/reject', [PublicQuoteController::class, 'reject'])
+    ->middleware('throttle:20,1')
+    ->name('public.quote.reject');
 
 // SePay gọi từ máy chủ của họ: không có phiên đăng nhập / CSRF, xác thực bằng khóa API trong header.
 Route::post('/webhooks/sepay', [BankWebhookController::class, 'sepay'])

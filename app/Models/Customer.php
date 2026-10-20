@@ -18,6 +18,8 @@ class Customer extends Model
         'address',
         'customer_type',
         'tax_code',
+        'credit_limit',
+        'payment_terms_days',
         'reminder_opt_out',
         'messaging_opt_in',
         'messaging_opt_in_at',
@@ -31,6 +33,8 @@ class Customer extends Model
     {
         return [
             'customer_type' => CustomerType::class,
+            'credit_limit' => 'decimal:2',
+            'payment_terms_days' => 'integer',
             'reminder_opt_out' => 'boolean',
             'messaging_opt_in' => 'boolean',
             'messaging_opt_in_at' => 'datetime',
@@ -40,6 +44,36 @@ class Customer extends Model
     public function vehicles(): HasMany
     {
         return $this->hasMany(Vehicle::class);
+    }
+
+    public function fleetContracts(): HasMany
+    {
+        return $this->hasMany(FleetContract::class);
+    }
+
+    public function activeFleetContract(): ?FleetContract
+    {
+        return $this->fleetContracts()->active()->latest('id')->first();
+    }
+
+    public function outstandingReceivable(): float
+    {
+        return (float) Invoice::query()
+            ->whereHas('workOrder.vehicle', fn ($q) => $q->where('customer_id', $this->id))
+            ->outstanding()
+            ->get()
+            ->sum(fn (Invoice $invoice): float => $invoice->outstandingAmount());
+    }
+
+    public function effectiveCreditLimit(): ?float
+    {
+        $contract = $this->activeFleetContract();
+
+        if ($contract instanceof FleetContract && $contract->effectiveCreditLimit() !== null) {
+            return $contract->effectiveCreditLimit();
+        }
+
+        return $this->credit_limit !== null ? (float) $this->credit_limit : null;
     }
 
     protected static function booted(): void

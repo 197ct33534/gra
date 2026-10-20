@@ -11,6 +11,7 @@ use App\Filament\Resources\Invoices\Pages\ListInvoices;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
 use App\Models\Invoice;
 use App\Models\User;
+use App\Services\CreditNoteService;
 use App\Services\EInvoiceService;
 use App\Services\WorkOrderService;
 use App\Support\VietnameseMoney;
@@ -168,6 +169,7 @@ class InvoiceResource extends Resource
                 self::issueEInvoiceAction(),
                 self::cancelEInvoiceAction(),
                 self::sendEInvoiceLinkAction(),
+                self::creditNoteAction(),
                 Action::make('printInvoice')
                     ->label('In hóa đơn')
                     ->icon(Heroicon::OutlinedPrinter)
@@ -254,6 +256,49 @@ class InvoiceResource extends Resource
                     return;
                 }
                 Notification::make()->title('Đã xếp hàng gửi link HĐĐT.')->success()->send();
+            });
+    }
+
+    public static function creditNoteAction(): Action
+    {
+        return Action::make('creditNote')
+            ->label('Credit note / hoàn tiền')
+            ->icon(Heroicon::OutlinedReceiptRefund)
+            ->color('danger')
+            ->visible(fn (Invoice $record): bool => (float) $record->paid_amount > 0 && (User::current()?->isAdmin() ?? false))
+            ->form([
+                MoneyInput::make('amount')
+                    ->label('Số tiền hoàn')
+                    ->required()
+                    ->default(fn (Invoice $record): int => (int) round((float) $record->paid_amount)),
+                Textarea::make('reason')->label('Lý do')->required()->rows(2),
+                Toggle::make('restock')->label('Hoàn kho phụ tùng đã xuất')->inline(false),
+                Textarea::make('notes')->label('Ghi chú thêm')->rows(2),
+            ])
+            ->requiresConfirmation()
+            ->action(function (Invoice $record, array $data): void {
+                $user = User::current();
+                if ($user === null) {
+                    return;
+                }
+
+                try {
+                    $note = app(CreditNoteService::class)->issue(
+                        $record,
+                        $data['amount'],
+                        (string) $data['reason'],
+                        $user->id,
+                        (bool) ($data['restock'] ?? false),
+                        $data['notes'] ?? null,
+                    );
+                    Notification::make()
+                        ->title('Đã lập '.$note->code)
+                        ->body('Hoàn '.VietnameseMoney::format($note->amount))
+                        ->success()
+                        ->send();
+                } catch (DomainException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
+                }
             });
     }
 

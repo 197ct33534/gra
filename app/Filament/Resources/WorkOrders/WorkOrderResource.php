@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\WorkOrders;
 
+use App\Enums\InsuranceClaimStatus;
 use App\Enums\InvoicePayer;
 use App\Enums\PaymentMethod;
 use App\Enums\WorkOrderItemSource;
@@ -21,6 +22,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
+use App\Services\QuoteApprovalService;
 use App\Services\WorkOrderService;
 use App\Support\VietnameseMoney;
 use BackedEnum;
@@ -239,6 +241,23 @@ class WorkOrderResource extends Resource
                 ->label('Khấu trừ khách tự trả')
                 ->default(0)
                 ->visible(fn (Get $get): bool => self::isInsurance($get('order_type')) && User::currentCanSeeMoney()),
+            TextInput::make('insurance_claim_no')
+                ->label('Số hồ sơ BH')
+                ->maxLength(80)
+                ->visible(fn (Get $get): bool => self::isInsurance($get('order_type'))),
+            TextInput::make('insurance_adjuster')
+                ->label('Giám định viên')
+                ->maxLength(255)
+                ->visible(fn (Get $get): bool => self::isInsurance($get('order_type'))),
+            DatePicker::make('insurance_expected_pay_at')
+                ->label('Dự kiến BH chi')
+                ->native(false)
+                ->visible(fn (Get $get): bool => self::isInsurance($get('order_type'))),
+            Select::make('insurance_claim_status')
+                ->label('Trạng thái hồ sơ BH')
+                ->options(InsuranceClaimStatus::class)
+                ->native(false)
+                ->visible(fn (Get $get): bool => self::isInsurance($get('order_type'))),
             Textarea::make('customer_request')
                 ->label('Yêu cầu khách hàng')
                 ->rows(3)
@@ -265,6 +284,14 @@ class WorkOrderResource extends Resource
                 ->panelLayout('grid')
                 ->reorderable()
                 ->appendFiles()
+                ->columnSpanFull(),
+            SpatieMediaLibraryFileUpload::make('insurance_docs')
+                ->label('Chứng từ bảo hiểm (ảnh/PDF)')
+                ->collection('insurance_docs')
+                ->multiple()
+                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp', 'application/pdf'])
+                ->openable()
+                ->downloadable()
                 ->columnSpanFull(),
             CheckboxList::make('checkin_checklist')
                 ->label('Đồ trên xe khi tiếp nhận')
@@ -601,6 +628,7 @@ class WorkOrderResource extends Resource
             ->recordActions([
                 self::printJobCardAction(),
                 self::printQuotationAction(),
+                self::copyQuoteLinkAction(),
                 self::createInvoiceAction(),
                 self::printInvoiceAction(),
                 self::printInsuranceInvoiceAction(),
@@ -638,6 +666,33 @@ class WorkOrderResource extends Resource
             ->color('info')
             ->url(fn (WorkOrder $record): string => route('work-orders.quotation', $record))
             ->openUrlInNewTab();
+    }
+
+    public static function copyQuoteLinkAction(): Action
+    {
+        return Action::make('copyQuoteLink')
+            ->authorize(fn (): bool => self::isOfficeUser())
+            ->label('Link duyệt BG (KH)')
+            ->icon(Heroicon::OutlinedLink)
+            ->color('purple')
+            ->visible(fn (WorkOrder $record): bool => in_array($record->status, [
+                WorkOrderStatus::Quoted,
+                WorkOrderStatus::Diagnosing,
+                WorkOrderStatus::Reception,
+            ], true))
+            ->action(function (WorkOrder $record): void {
+                if ($record->status !== WorkOrderStatus::Quoted) {
+                    $record->update(['status' => WorkOrderStatus::Quoted]);
+                }
+
+                $url = app(QuoteApprovalService::class)->publicUrl($record->fresh() ?? $record);
+                Notification::make()
+                    ->title('Link duyệt báo giá cho khách')
+                    ->body($url)
+                    ->success()
+                    ->persistent()
+                    ->send();
+            });
     }
 
     public static function createInvoiceAction(): Action

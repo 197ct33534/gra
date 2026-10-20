@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\InsuranceClaimStatus;
 use App\Enums\InvoicePayer;
 use App\Enums\WorkOrderItemType;
 use App\Enums\WorkOrderStatus;
@@ -27,6 +28,10 @@ class WorkOrder extends Model implements HasMedia
         'warranty_card_id',
         'insurance_company',
         'insurance_deductible',
+        'insurance_claim_no',
+        'insurance_adjuster',
+        'insurance_expected_pay_at',
+        'insurance_claim_status',
         'service_advisor_id',
         'reception_odo',
         'fuel_level',
@@ -38,6 +43,11 @@ class WorkOrder extends Model implements HasMedia
         'status',
         'needs_restock',
         'approved_revision',
+        'quote_approval_token',
+        'quote_approved_at',
+        'quote_approved_via',
+        'quote_rejected_at',
+        'quote_reject_reason',
         'stock_exported_at',
         'delivered_at',
         'total_parts_amount',
@@ -56,12 +66,16 @@ class WorkOrder extends Model implements HasMedia
         return [
             'order_type' => WorkOrderType::class,
             'insurance_deductible' => 'decimal:2',
+            'insurance_expected_pay_at' => 'date',
+            'insurance_claim_status' => InsuranceClaimStatus::class,
             'reception_odo' => 'integer',
             'checkin_checklist' => 'array',
             'promised_at' => 'datetime',
             'status' => WorkOrderStatus::class,
             'needs_restock' => 'boolean',
             'approved_revision' => 'integer',
+            'quote_approved_at' => 'datetime',
+            'quote_rejected_at' => 'datetime',
             'stock_exported_at' => 'datetime',
             'delivered_at' => 'datetime',
             'total_parts_amount' => 'decimal:2',
@@ -81,6 +95,11 @@ class WorkOrder extends Model implements HasMedia
         $this->addMediaCollection('reception_signature')
             ->singleFile()
             ->acceptsMimeTypes(['image/png']);
+
+        $this->addMediaCollection('insurance_docs')
+            ->acceptsMimeTypes([
+                'image/jpeg', 'image/png', 'image/webp', 'application/pdf',
+            ]);
     }
 
     public function vehicle(): BelongsTo
