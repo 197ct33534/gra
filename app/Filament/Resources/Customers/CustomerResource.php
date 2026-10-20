@@ -10,7 +10,12 @@ use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\Customers\Pages\ViewCustomer;
 use App\Filament\Resources\Customers\RelationManagers\VehiclesRelationManager;
 use App\Models\Customer;
+use App\Models\User;
+use App\Services\WalletService;
+use App\Support\VietnameseMoney;
 use BackedEnum;
+use DomainException;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -19,6 +24,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -108,6 +114,12 @@ class CustomerResource extends Resource
                         ? $state->getLabel()
                         : (string) ($state ?? 'Thành viên'))
                     ->visibleOn('edit'),
+                TextInput::make('wallet_balance')
+                    ->label('Số dư ví trả trước')
+                    ->disabled()
+                    ->dehydrated(false)
+                    ->formatStateUsing(fn ($state): string => VietnameseMoney::format((float) ($state ?? 0)))
+                    ->visibleOn(['edit', 'view']),
                 Toggle::make('messaging_opt_in')
                     ->label('Đồng ý nhận tin Zalo/SMS')
                     ->helperText('Bắt buộc để gửi nhắc bảo dưỡng / lịch hẹn.')
@@ -157,6 +169,11 @@ class CustomerResource extends Resource
                     ->label('Hạng')
                     ->badge()
                     ->toggleable(),
+                TextColumn::make('wallet_balance')
+                    ->label('Ví')
+                    ->money('VND')
+                    ->sortable()
+                    ->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('customer_type')
@@ -167,6 +184,7 @@ class CustomerResource extends Resource
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+                self::depositWalletAction(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -191,5 +209,41 @@ class CustomerResource extends Resource
             'view' => ViewCustomer::route('/{record}'),
             'edit' => EditCustomer::route('/{record}/edit'),
         ];
+    }
+
+    public static function depositWalletAction(): Action
+    {
+        return Action::make('depositWallet')
+            ->label('Nạp ví')
+            ->icon(Heroicon::OutlinedWallet)
+            ->color('success')
+            ->visible(fn (): bool => User::current()?->canSeeMoney() ?? false)
+            ->form([
+                MoneyInput::make('amount')
+                    ->label('Số tiền nạp')
+                    ->required(),
+                Textarea::make('reason')
+                    ->label('Lý do / ghi chú')
+                    ->required()
+                    ->rows(2)
+                    ->default('Nạp tiền trả trước'),
+            ])
+            ->action(function (Customer $record, array $data): void {
+                try {
+                    $tx = app(WalletService::class)->deposit(
+                        $record,
+                        VietnameseMoney::parse($data['amount']) ?? 0,
+                        (string) $data['reason'],
+                        User::current()?->id,
+                    );
+                    Notification::make()
+                        ->title('Đã nạp ví '.VietnameseMoney::format((float) $tx->amount))
+                        ->body('Số dư: '.VietnameseMoney::format((float) $tx->balance_after))
+                        ->success()
+                        ->send();
+                } catch (DomainException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
+                }
+            });
     }
 }

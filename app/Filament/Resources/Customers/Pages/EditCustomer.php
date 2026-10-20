@@ -14,6 +14,7 @@ class EditCustomer extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            CustomerResource::depositWalletAction(),
             ViewAction::make(),
             DeleteAction::make(),
         ];

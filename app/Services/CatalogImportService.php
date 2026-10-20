@@ -141,7 +141,11 @@ class CatalogImportService
                         $payload['warranty_km'] = max(0, (int) $row['warranty_km']);
                     }
 
-                    $existing = Part::query()->where('sku', $sku)->first();
+                    $branchId = Part::defaultBranchIdForCurrentUser();
+                    $existing = Part::query()
+                        ->when($branchId !== null, fn ($q) => $q->where('branch_id', $branchId))
+                        ->where('sku', $sku)
+                        ->first();
 
                     if ($existing instanceof Part) {
                         // Không đè tồn kho khi cập nhật — tránh phá số kiểm kê.
@@ -152,6 +156,7 @@ class CatalogImportService
                         $stock = max(0, (int) ($row['stock_quantity'] ?? 0));
                         Part::query()->create([
                             ...$payload,
+                            'branch_id' => $branchId,
                             'sku' => $sku,
                             'stock_quantity' => $stock,
                             'reserved_quantity' => 0,

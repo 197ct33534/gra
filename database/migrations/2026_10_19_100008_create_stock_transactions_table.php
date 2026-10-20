@@ -16,6 +16,8 @@ return new class extends Migration
                 'export_work_order',
                 'return',
                 'stocktake_adjustment',
+                'transfer_out',
+                'transfer_in',
             ]);
             $table->integer('quantity');
             $table->decimal('unit_price', 15, 2);

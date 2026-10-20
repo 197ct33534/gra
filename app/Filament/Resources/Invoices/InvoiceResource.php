@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\CreditNoteService;
 use App\Services\EInvoiceService;
 use App\Services\LoyaltyService;
+use App\Services\WalletService;
 use App\Services\WorkOrderService;
 use App\Support\VietnameseMoney;
 use BackedEnum;
@@ -168,6 +169,7 @@ class InvoiceResource extends Resource
             ])
             ->recordActions([
                 self::recordPaymentAction(),
+                self::applyWalletAction(),
                 self::redeemLoyaltyAction(),
                 self::issueEInvoiceAction(),
                 self::cancelEInvoiceAction(),
@@ -297,6 +299,57 @@ class InvoiceResource extends Resource
                     Notification::make()
                         ->title('Đã lập '.$note->code)
                         ->body('Hoàn '.VietnameseMoney::format($note->amount))
+                        ->success()
+                        ->send();
+                } catch (DomainException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
+                }
+            });
+    }
+
+    public static function applyWalletAction(): Action
+    {
+        return Action::make('applyWallet')
+            ->label('Trừ ví khách')
+            ->icon(Heroicon::OutlinedWallet)
+            ->color('info')
+            ->visible(function (Invoice $record): bool {
+                if ($record->outstandingAmount() <= 0 || $record->isInsurancePayer()) {
+                    return false;
+                }
+
+                $wallet = (float) ($record->workOrder?->vehicle?->customer?->wallet_balance ?? 0);
+
+                return $wallet > 0 && (User::current()?->canSeeMoney() ?? false);
+            })
+            ->modalHeading(fn (Invoice $record): string => 'Trừ ví — HĐ '.$record->invoice_number)
+            ->modalDescription(function (Invoice $record): string {
+                $customer = $record->workOrder?->vehicle?->customer;
+
+                return 'Số dư ví '.VietnameseMoney::format((float) ($customer?->wallet_balance ?? 0))
+                    .' · còn nợ '.VietnameseMoney::format($record->outstandingAmount());
+            })
+            ->form([
+                MoneyInput::make('amount')
+                    ->label('Số tiền trừ ví')
+                    ->required()
+                    ->default(function (Invoice $record): int {
+                        $wallet = (float) ($record->workOrder?->vehicle?->customer?->wallet_balance ?? 0);
+
+                        return (int) round(min($wallet, $record->outstandingAmount()));
+                    }),
+            ])
+            ->action(function (Invoice $record, array $data): void {
+                try {
+                    $tx = app(WalletService::class)->applyToInvoice(
+                        $record,
+                        VietnameseMoney::parse($data['amount']) ?? 0,
+                        User::current()?->id,
+                    );
+                    Notification::make()
+                        ->title('Đã trừ ví '.VietnameseMoney::format(abs((float) $tx->amount)))
+                        ->body('Còn nợ: '.VietnameseMoney::format($record->fresh()->outstandingAmount())
+                            .' · Ví còn: '.VietnameseMoney::format((float) $tx->balance_after))
                         ->success()
                         ->send();
                 } catch (DomainException $e) {

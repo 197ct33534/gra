@@ -23,6 +23,7 @@ class Customer extends Model
         'payment_terms_days',
         'loyalty_points',
         'loyalty_tier',
+        'wallet_balance',
         'reminder_opt_out',
         'messaging_opt_in',
         'messaging_opt_in_at',
@@ -40,6 +41,7 @@ class Customer extends Model
             'payment_terms_days' => 'integer',
             'loyalty_points' => 'integer',
             'loyalty_tier' => LoyaltyTier::class,
+            'wallet_balance' => 'decimal:2',
             'reminder_opt_out' => 'boolean',
             'messaging_opt_in' => 'boolean',
             'messaging_opt_in_at' => 'datetime',
@@ -59,6 +61,11 @@ class Customer extends Model
     public function loyaltyTransactions(): HasMany
     {
         return $this->hasMany(LoyaltyTransaction::class);
+    }
+
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(CustomerWalletTransaction::class);
     }
 
     public function activeFleetContract(): ?FleetContract

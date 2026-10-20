@@ -101,6 +101,12 @@
                     @endforeach
                 </x-filament::input.select>
             </x-filament::input.wrapper>
+            <x-filament::button wire:click="exportSalesCsv" color="gray" icon="heroicon-o-arrow-down-tray">
+                CSV bán hàng
+            </x-filament::button>
+            <x-filament::button wire:click="exportPurchaseCsv" color="gray" icon="heroicon-o-arrow-down-tray">
+                CSV mua hàng
+            </x-filament::button>
         </div>
         <div class="fr-grid">
             <div class="fr-stat"><div class="lbl">Số xe giao</div><div class="val">{{ $pnl['cars'] }}</div></div>

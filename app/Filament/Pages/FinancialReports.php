@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\User;
+use App\Services\AccountingExportService;
 use App\Services\FinancialReportService;
 use App\Services\PayrollService;
 use App\Support\VietnameseMoney;
@@ -10,6 +11,7 @@ use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Carbon;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use UnitEnum;
 
 class FinancialReports extends Page
@@ -74,5 +76,15 @@ class FinancialReports extends Page
     public static function money(float $amount): string
     {
         return VietnameseMoney::format($amount);
+    }
+
+    public function exportSalesCsv(): StreamedResponse
+    {
+        return app(AccountingExportService::class)->monthlySalesCsv($this->month);
+    }
+
+    public function exportPurchaseCsv(): StreamedResponse
+    {
+        return app(AccountingExportService::class)->monthlyPurchaseCsv($this->month);
     }
 }
