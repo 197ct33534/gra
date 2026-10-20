@@ -38,6 +38,7 @@
                         <th class="num">Số xe</th>
                         <th class="num">Tiền công làm ra</th>
                         <th class="num">Giờ chuẩn</th>
+                        <th class="num">Giờ thực tế</th>
                         <th class="num">Làm lại (BH)</th>
                         <th class="num">Tiền khoán</th>
                     </tr>
@@ -69,11 +70,12 @@
                             <td class="num">{{ $row['cars'] }}</td>
                             <td class="num">{{ \App\Filament\Pages\TechnicianPayroll::money($row['labor']) }}</td>
                             <td class="num">{{ number_format($row['minutes'] / 60, 1, ',', '.') }} giờ</td>
+                            <td class="num">{{ number_format(($row['actual_minutes'] ?? 0) / 60, 1, ',', '.') }} giờ</td>
                             <td class="num" style="{{ $row['redo'] > 0 ? 'color:#dc2626;font-weight:700' : '' }}">{{ $row['redo'] }}</td>
                             <td class="num pr-payout">{{ \App\Filament\Pages\TechnicianPayroll::money($row['payout']) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="7" class="pr-muted">Chưa có kỹ thuật viên.</td></tr>
+                        <tr><td colspan="8" class="pr-muted">Chưa có kỹ thuật viên.</td></tr>
                     @endforelse
                 </tbody>
             </table>

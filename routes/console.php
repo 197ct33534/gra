@@ -17,3 +17,6 @@ Schedule::command('garage:backup')->dailyAt('02:00')->timezone('Asia/Ho_Chi_Minh
 
 // Nhắc lịch hẹn trước X giờ (config garage.appointments.remind_before_hours).
 Schedule::command('garage:queue-appointment-reminders')->hourly()->timezone('Asia/Ho_Chi_Minh')->withoutOverlapping();
+
+// Thông báo Filament: RO trễ hẹn, lịch trễ, tồn thấp (mỗi 30 phút).
+Schedule::command('garage:dispatch-alerts')->everyThirtyMinutes()->timezone('Asia/Ho_Chi_Minh')->withoutOverlapping();

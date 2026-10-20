@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Parts\Pages;
 
+use App\Filament\Actions\CatalogImportActions;
 use App\Filament\Resources\Parts\PartResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -13,6 +14,8 @@ class ListParts extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            CatalogImportActions::downloadPartTemplate(),
+            CatalogImportActions::importParts(),
             CreateAction::make(),
         ];
     }

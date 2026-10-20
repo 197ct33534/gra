@@ -113,7 +113,7 @@ class PayrollService
     }
 
     /**
-     * @return list<array{technician: User, jobs: int, cars: int, labor: float, payout: float, minutes: int, redo: int, rate: float}>
+     * @return list<array{technician: User, jobs: int, cars: int, labor: float, payout: float, minutes: int, actual_minutes: int, redo: int, rate: float}>
      */
     public function technicianSummary(string $month): array
     {
@@ -131,6 +131,7 @@ class PayrollService
                 'labor' => round((float) $own->sum(fn (WorkOrderItem $item): float => (float) $item->subtotal), 2),
                 'payout' => round((float) $own->sum(fn (WorkOrderItem $item): float => $this->itemPayout($item)), 2),
                 'minutes' => (int) $own->sum(fn (WorkOrderItem $item): float => (float) $item->quantity * (int) ($item->service?->standard_time_minutes ?? 0)),
+                'actual_minutes' => (int) $own->sum(fn (WorkOrderItem $item): int => (int) ($item->actual_minutes ?? 0)),
                 'redo' => $own->filter(fn (WorkOrderItem $item): bool => $item->workOrder?->order_type === WorkOrderType::WarrantyRedo)->count(),
                 'rate' => self::rateFor($technician),
             ];

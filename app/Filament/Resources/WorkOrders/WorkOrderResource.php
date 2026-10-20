@@ -439,6 +439,11 @@ class WorkOrderResource extends Resource
                                 ->searchable()
                                 ->preload()
                                 ->native(false),
+                            TextInput::make('actual_minutes')
+                                ->label('Giờ thực tế (phút)')
+                                ->numeric()
+                                ->minValue(0)
+                                ->helperText('Tự cộng từ chấm công, hoặc nhập tay.'),
                             Textarea::make('finding_note')
                                 ->label('Hiện tượng thợ phát hiện khi tháo')
                                 ->placeholder('VD: Tháo bánh thấy càng A dưới trái nứt, cao su bát bèo rách')

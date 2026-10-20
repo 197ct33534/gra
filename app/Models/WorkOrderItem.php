@@ -45,6 +45,7 @@ class WorkOrderItem extends Model
         'subtotal',
         'technician_id',
         'technician_payout',
+        'actual_minutes',
         'status',
     ];
 
@@ -67,6 +68,7 @@ class WorkOrderItem extends Model
             'discount_amount' => 'decimal:2',
             'subtotal' => 'decimal:2',
             'technician_payout' => 'decimal:2',
+            'actual_minutes' => 'integer',
             'status' => WorkOrderItemStatus::class,
         ];
     }
