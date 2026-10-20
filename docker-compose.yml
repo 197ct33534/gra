@@ -1,0 +1,91 @@
+services:
+  app:
+    build: .
+    container_name: gra-app
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: >
+      sh -c "php artisan migrate --force
+      && php artisan serve --host=0.0.0.0 --port=8000"
+    networks:
+      - gra
+    restart: unless-stopped
+
+  queue:
+    build: .
+    container_name: gra-queue
+    env_file:
+      - .env
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+    depends_on:
+      - app
+      - mysql
+      - redis
+    command: php artisan queue:work --sleep=1 --tries=3 --timeout=90
+    networks:
+      - gra
+    restart: unless-stopped
+
+  scheduler:
+    build: .
+    container_name: gra-scheduler
+    env_file:
+      - .env
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+    depends_on:
+      - app
+      - mysql
+    command: >
+      sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+    networks:
+      - gra
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.4
+    container_name: gra-mysql
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-gra}
+      MYSQL_USER: ${DB_USERNAME:-gra}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - gra_mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - gra
+
+  redis:
+    image: redis:7-alpine
+    container_name: gra-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - gra
+
+volumes:
+  gra_mysql:
+
+networks:
+  gra:
+    driver: bridge
