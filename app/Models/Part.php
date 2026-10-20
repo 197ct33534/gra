@@ -3,16 +3,20 @@
 namespace App\Models;
 
 use App\Enums\WorkOrderItemType;
+use App\Models\Concerns\BelongsToBranch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Part extends Model
 {
+    use BelongsToBranch;
+
     /**
      * @var list<string>
      */
     protected $fillable = [
+        'branch_id',
         'category_id',
         'sku',
         'oem_code',

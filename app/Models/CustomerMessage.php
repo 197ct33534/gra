@@ -16,6 +16,7 @@ class CustomerMessage extends Model
         'customer_id',
         'vehicle_id',
         'invoice_id',
+        'work_order_id',
         'type',
         'channel',
         'phone',
@@ -61,5 +62,10 @@ class CustomerMessage extends Model
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
+    }
+
+    public function workOrder(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrder::class);
     }
 }

@@ -13,6 +13,8 @@ use App\Models\CustomerMessage;
 use App\Models\Invoice;
 use App\Models\Vehicle;
 use App\Models\VehicleRecommendation;
+use App\Models\WorkOrder;
+use App\Services\CustomerPortalService;
 use App\Support\VietnameseMoney;
 use DomainException;
 use Illuminate\Database\Eloquent\Builder;
@@ -107,6 +109,63 @@ class MessagingService
             'status' => CustomerMessageStatus::Pending,
             'scheduled_at' => now(),
             'created_by' => $userId,
+        ]);
+    }
+
+    public function queueStatusUpdate(WorkOrder $order): ?CustomerMessage
+    {
+        if (! (bool) config('garage.status_notify.enabled', true)) {
+            return null;
+        }
+
+        $notifyable = [
+            WorkOrderStatus::Quoted,
+            WorkOrderStatus::CustomerApproved,
+            WorkOrderStatus::InProgress,
+            WorkOrderStatus::Qc,
+            WorkOrderStatus::Completed,
+            WorkOrderStatus::Delivered,
+        ];
+
+        if (! in_array($order->status, $notifyable, true)) {
+            return null;
+        }
+
+        $order->loadMissing('vehicle.customer');
+        $customer = $order->vehicle?->customer;
+        $phone = self::normalizePhone($customer?->phone);
+
+        if (! $customer instanceof Customer || $phone === null || ! $customer->messaging_opt_in) {
+            return null;
+        }
+
+        $already = CustomerMessage::query()
+            ->where('work_order_id', $order->id)
+            ->where('type', CustomerMessageType::StatusUpdate)
+            ->where('status', CustomerMessageStatus::Pending)
+            ->where('template_code', $order->status->value)
+            ->exists();
+
+        if ($already) {
+            return null;
+        }
+
+        $statusUrl = app(CustomerPortalService::class)->statusUrl($order);
+        $body = config('garage.name').': xe '.$order->vehicle?->license_plate
+            .' ('.$order->code.') đang ở bước «'.$order->status->getLabel().'».'
+            .' Theo dõi: '.$statusUrl;
+
+        return CustomerMessage::query()->create([
+            'customer_id' => $customer->id,
+            'vehicle_id' => $order->vehicle_id,
+            'work_order_id' => $order->id,
+            'type' => CustomerMessageType::StatusUpdate,
+            'channel' => (string) config('garage.messaging.channel', 'zalo'),
+            'phone' => $phone,
+            'body' => $body,
+            'status' => CustomerMessageStatus::Pending,
+            'template_code' => $order->status->value,
+            'scheduled_at' => now(),
         ]);
     }
 

@@ -13,6 +13,7 @@ use App\Models\Invoice;
 use App\Models\User;
 use App\Services\CreditNoteService;
 use App\Services\EInvoiceService;
+use App\Services\LoyaltyService;
 use App\Services\WorkOrderService;
 use App\Support\VietnameseMoney;
 use BackedEnum;
@@ -20,6 +21,7 @@ use DomainException;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -166,6 +168,7 @@ class InvoiceResource extends Resource
             ])
             ->recordActions([
                 self::recordPaymentAction(),
+                self::redeemLoyaltyAction(),
                 self::issueEInvoiceAction(),
                 self::cancelEInvoiceAction(),
                 self::sendEInvoiceLinkAction(),
@@ -302,6 +305,62 @@ class InvoiceResource extends Resource
             });
     }
 
+    public static function redeemLoyaltyAction(): Action
+    {
+        return Action::make('redeemLoyalty')
+            ->label('Đổi điểm loyalty')
+            ->icon(Heroicon::OutlinedGift)
+            ->color('purple')
+            ->visible(function (Invoice $record): bool {
+                if ($record->outstandingAmount() <= 0 || $record->isInsurancePayer()) {
+                    return false;
+                }
+
+                $points = (int) ($record->workOrder?->vehicle?->customer?->loyalty_points ?? 0);
+
+                return $points > 0 && (User::current()?->canSeeMoney() ?? false);
+            })
+            ->modalHeading(fn (Invoice $record): string => 'Đổi điểm — HĐ '.$record->invoice_number)
+            ->modalDescription(function (Invoice $record): string {
+                $customer = $record->workOrder?->vehicle?->customer;
+                $rate = app(LoyaltyService::class)->redeemVndPerPoint();
+
+                return 'Khách có '.(int) ($customer?->loyalty_points ?? 0).' điểm · 1 điểm = '
+                    .VietnameseMoney::format($rate).' · còn nợ '
+                    .VietnameseMoney::format($record->outstandingAmount());
+            })
+            ->form([
+                TextInput::make('points')
+                    ->label('Số điểm đổi')
+                    ->numeric()
+                    ->required()
+                    ->minValue(1)
+                    ->default(function (Invoice $record): int {
+                        $customerPoints = (int) ($record->workOrder?->vehicle?->customer?->loyalty_points ?? 0);
+                        $rate = app(LoyaltyService::class)->redeemVndPerPoint();
+                        $maxByDebt = (int) floor($record->outstandingAmount() / $rate);
+
+                        return max(1, min($customerPoints, $maxByDebt));
+                    }),
+            ])
+            ->action(function (Invoice $record, array $data): void {
+                try {
+                    $tx = app(LoyaltyService::class)->redeemOnInvoice(
+                        $record,
+                        (int) $data['points'],
+                        User::current()?->id,
+                    );
+                    Notification::make()
+                        ->title('Đã đổi '.abs($tx->points).' điểm')
+                        ->body('Còn nợ: '.VietnameseMoney::format($record->fresh()->outstandingAmount()))
+                        ->success()
+                        ->send();
+                } catch (DomainException $e) {
+                    Notification::make()->title($e->getMessage())->danger()->send();
+                }
+            });
+    }
+
     public static function recordPaymentAction(): Action
     {
         return Action::make('recordPayment')
@@ -366,6 +425,6 @@ class InvoiceResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['workOrder.vehicle.customer']);
+        return parent::getEloquentQuery()->with(['workOrder.vehicle.customer', 'workOrder.branch']);
     }
 }

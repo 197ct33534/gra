@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\CashMovementDirection;
 use App\Enums\CashSessionStatus;
+use App\Models\Concerns\BelongsToBranch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,10 +12,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CashSession extends Model
 {
+    use BelongsToBranch;
+
     /**
      * @var list<string>
      */
     protected $fillable = [
+        'branch_id',
         'opened_at',
         'closed_at',
         'opened_by',

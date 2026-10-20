@@ -69,6 +69,13 @@ class UserResource extends Resource
                 ->placeholder(fn (): string => 'Mặc định '.PayrollService::defaultRate().'%')
                 ->helperText('Áp dụng cho hạng mục công không có mức khoán cố định.')
                 ->visible(fn (Get $get): bool => in_array($get('role'), [UserRole::Technician, UserRole::Technician->value], true)),
+            Select::make('branch_id')
+                ->label('Chi nhánh')
+                ->relationship('branch', 'name')
+                ->searchable()
+                ->preload()
+                ->native(false)
+                ->helperText('Dùng khi bật GARAGE_BRANCH_ENFORCE=true.'),
             TextInput::make('password')
                 ->label('Mật khẩu')
                 ->password()
@@ -99,6 +106,10 @@ class UserResource extends Resource
                         UserRole::ServiceAdvisor => 'info',
                         default => 'gray',
                     }),
+                TextColumn::make('branch.name')
+                    ->label('Chi nhánh')
+                    ->placeholder('—')
+                    ->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('role')

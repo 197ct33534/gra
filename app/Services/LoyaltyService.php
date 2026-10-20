@@ -56,6 +56,65 @@ class LoyaltyService
         );
     }
 
+    public function redeemVndPerPoint(): int
+    {
+        return max(1, (int) config('garage.loyalty.redeem_vnd_per_point', 1000));
+    }
+
+    /**
+     * Đổi điểm lấy giảm trừ trên hóa đơn còn nợ.
+     */
+    public function redeemOnInvoice(\App\Models\Invoice $invoice, int $points, ?int $actorId = null): LoyaltyTransaction
+    {
+        if ($points < 1) {
+            throw new DomainException('Số điểm đổi phải lớn hơn 0.');
+        }
+
+        $invoice->loadMissing('workOrder.vehicle.customer');
+        $customer = $invoice->workOrder?->vehicle?->customer;
+
+        if (! $customer instanceof Customer) {
+            throw new DomainException('Hóa đơn không gắn khách hàng.');
+        }
+
+        if ($invoice->isInsurancePayer()) {
+            throw new DomainException('Không đổi điểm trên hóa đơn bảo hiểm.');
+        }
+
+        $credit = round($points * $this->redeemVndPerPoint(), 2);
+        $outstanding = $invoice->outstandingAmount();
+
+        if ($credit - $outstanding > 0.001) {
+            throw new DomainException(
+                'Điểm đổi vượt số còn nợ (tối đa '
+                .max(1, (int) floor($outstanding / $this->redeemVndPerPoint()))
+                .' điểm).'
+            );
+        }
+
+        return DB::transaction(function () use ($invoice, $customer, $points, $credit, $actorId): LoyaltyTransaction {
+            /** @var \App\Models\Invoice $locked */
+            $locked = \App\Models\Invoice::query()->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+
+            $tx = $this->adjust(
+                $customer->fresh(),
+                -$points,
+                'Đổi điểm HĐ '.$locked->invoice_number,
+                $actorId,
+                $locked->work_order_id,
+            );
+
+            $locked->loyalty_points_redeemed = (int) $locked->loyalty_points_redeemed + $points;
+            $locked->loyalty_discount_amount = round((float) $locked->loyalty_discount_amount + $credit, 2);
+            $locked->notes = trim(($locked->notes ? $locked->notes."\n" : '')
+                .'Loyalty: -'.$points.' điểm → giảm '.number_format($credit, 0, ',', '.').' đ');
+            $locked->syncPaymentStatus();
+            $locked->save();
+
+            return $tx;
+        });
+    }
+
     public function adjust(
         Customer $customer,
         int $points,

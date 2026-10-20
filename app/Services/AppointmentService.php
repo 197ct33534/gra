@@ -63,6 +63,7 @@ class AppointmentService
 
             return Appointment::query()->create([
                 'code' => $this->nextCode(),
+                'branch_id' => $data['branch_id'] ?? Appointment::defaultBranchIdForCurrentUser(),
                 'customer_id' => $data['customer_id'] ?? null,
                 'vehicle_id' => $data['vehicle_id'] ?? null,
                 'walk_in_name' => filled($data['walk_in_name'] ?? null) ? trim((string) $data['walk_in_name']) : null,

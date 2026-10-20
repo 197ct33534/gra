@@ -8,6 +8,7 @@ use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Enums\WorkOrderItemType;
 use App\Enums\WorkOrderStatus;
+use App\Models\Branch;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Part;
@@ -40,6 +41,19 @@ class DatabaseSeeder extends Seeder
         $this->seedCustomersAndVehicles();
         $this->seedWorkOrders();
         $this->seedShowcase();
+        $this->assignDefaultBranch();
+    }
+
+    private function assignDefaultBranch(): void
+    {
+        $branchId = Branch::defaultId();
+        if ($branchId === null) {
+            return;
+        }
+
+        User::query()->whereNull('branch_id')->update(['branch_id' => $branchId]);
+        WorkOrder::query()->whereNull('branch_id')->update(['branch_id' => $branchId]);
+        Part::query()->whereNull('branch_id')->update(['branch_id' => $branchId]);
     }
 
     private function seedSuppliers(): void

@@ -171,7 +171,7 @@ class WorkOrderService
 
             $paid = round((float) $locked->paid_amount + $received, 2);
             $locked->paid_amount = $paid;
-            $locked->payment_status = Invoice::statusFor((float) $locked->total_amount, $paid);
+            $locked->payment_status = Invoice::statusFor($locked->amountDue(), $paid);
 
             if (filled($note)) {
                 $line = now()->timezone((string) config('garage.timezone'))->format('d/m/Y').' — thu '.VietnameseMoney::format($received).': '.trim((string) $note);

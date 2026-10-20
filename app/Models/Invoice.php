@@ -22,6 +22,8 @@ class Invoice extends Model
         'payer_name',
         'total_amount',
         'paid_amount',
+        'loyalty_points_redeemed',
+        'loyalty_discount_amount',
         'payment_method',
         'payment_status',
         'notes',
@@ -57,6 +59,8 @@ class Invoice extends Model
         return [
             'total_amount' => 'decimal:2',
             'paid_amount' => 'decimal:2',
+            'loyalty_points_redeemed' => 'integer',
+            'loyalty_discount_amount' => 'decimal:2',
             'payer_type' => InvoicePayer::class,
             'payment_method' => PaymentMethod::class,
             'payment_status' => PaymentStatus::class,
@@ -85,9 +89,17 @@ class Invoice extends Model
         return $this->payer() === InvoicePayer::Insurance;
     }
 
+    /**
+     * Tổng phải thu sau khi trừ điểm loyalty.
+     */
+    public function amountDue(): float
+    {
+        return max(0.0, round((float) $this->total_amount - (float) $this->loyalty_discount_amount, 2));
+    }
+
     public function outstandingAmount(): float
     {
-        return max(0.0, round((float) $this->total_amount - (float) $this->paid_amount, 2));
+        return max(0.0, round($this->amountDue() - (float) $this->paid_amount, 2));
     }
 
     public static function statusFor(float $total, float $paid): PaymentStatus
@@ -97,6 +109,11 @@ class Invoice extends Model
         }
 
         return $paid > 0 ? PaymentStatus::PartiallyPaid : PaymentStatus::Unpaid;
+    }
+
+    public function syncPaymentStatus(): void
+    {
+        $this->payment_status = self::statusFor($this->amountDue(), (float) $this->paid_amount);
     }
 
     /**

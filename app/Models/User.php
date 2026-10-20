@@ -29,6 +29,7 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'role',
         'commission_rate',
+        'branch_id',
     ];
 
     /**
@@ -122,6 +123,11 @@ class User extends Authenticatable implements FilamentUser
     public static function currentCanSeeMoney(): bool
     {
         return self::current()?->canSeeMoney() ?? true;
+    }
+
+    public function branch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function advisedWorkOrders(): HasMany

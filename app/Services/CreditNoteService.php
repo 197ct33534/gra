@@ -72,7 +72,7 @@ class CreditNoteService
 
             $paid = round((float) $locked->paid_amount - $value, 2);
             $locked->paid_amount = $paid;
-            $locked->payment_status = Invoice::statusFor((float) $locked->total_amount, $paid);
+            $locked->payment_status = Invoice::statusFor($locked->amountDue(), $paid);
             $locked->notes = trim(($locked->notes ? $locked->notes."\n" : '').'Credit note: -'.VietnameseMoney::format($value).' — '.$reason);
             $locked->save();
 

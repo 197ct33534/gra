@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\AppointmentStatus;
 use App\Helpers\LicensePlateHelper;
+use App\Models\Concerns\BelongsToBranch;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,11 +12,14 @@ use Illuminate\Support\Carbon;
 
 class Appointment extends Model
 {
+    use BelongsToBranch;
+
     /**
      * @var list<string>
      */
     protected $fillable = [
         'code',
+        'branch_id',
         'customer_id',
         'vehicle_id',
         'walk_in_name',

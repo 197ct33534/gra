@@ -11,7 +11,7 @@
 | P2-03 | Feedback / NPS sau bàn giao | ✅ |
 | P2-04 | Điểm loyalty cơ bản | ✅ |
 | P2-05 | Portal đặt lịch công khai | ✅ |
-| P2-06 | Đa chi nhánh (scaffold) | ⏳ |
+| P2-06 | Đa chi nhánh (scaffold) | ✅ |
 
 ---
 

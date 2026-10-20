@@ -68,8 +68,17 @@ return [
     'loyalty' => [
         // 1 điểm / bao nhiêu VND doanh thu khi bàn giao.
         'vnd_per_point' => (int) env('GARAGE_LOYALTY_VND_PER_POINT', 10000),
+        // 1 điểm đổi được bao nhiêu VND trên hóa đơn.
+        'redeem_vnd_per_point' => (int) env('GARAGE_LOYALTY_REDEEM_VND', 1000),
     ],
     'vehicle_documents' => [
         'warn_before_days' => (int) env('GARAGE_DOC_WARN_DAYS', 30),
+    ],
+    'branches' => [
+        // true = nhân viên chỉ thấy dữ liệu chi nhánh của mình (admin vẫn thấy hết).
+        'enforce_scope' => (bool) env('GARAGE_BRANCH_ENFORCE', false),
+    ],
+    'status_notify' => [
+        'enabled' => (bool) env('GARAGE_STATUS_NOTIFY', true),
     ],
 ];

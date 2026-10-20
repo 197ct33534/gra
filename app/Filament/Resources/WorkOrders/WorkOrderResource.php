@@ -155,6 +155,14 @@ class WorkOrderResource extends Resource
                 ->required()
                 ->unique(ignoreRecord: true)
                 ->maxLength(32),
+            Select::make('branch_id')
+                ->label('Chi nhánh')
+                ->relationship('branch', 'name')
+                ->default(fn (): ?int => \App\Models\WorkOrder::defaultBranchIdForCurrentUser())
+                ->searchable()
+                ->preload()
+                ->native(false)
+                ->visible(fn (): bool => User::current()?->isAdmin() ?? false),
             Select::make('vehicle_id')
                 ->label('Xe')
                 ->relationship(
@@ -1097,7 +1105,8 @@ class WorkOrderResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->with(['vehicle.customer', 'serviceAdvisor'])
+            ->forCurrentBranch()
+            ->with(['vehicle.customer', 'serviceAdvisor', 'branch'])
             ->withCount('invoices');
     }
 

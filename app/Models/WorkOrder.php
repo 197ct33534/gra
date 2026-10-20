@@ -7,6 +7,7 @@ use App\Enums\InvoicePayer;
 use App\Enums\WorkOrderItemType;
 use App\Enums\WorkOrderStatus;
 use App\Enums\WorkOrderType;
+use App\Models\Concerns\BelongsToBranch;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,6 +17,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class WorkOrder extends Model implements HasMedia
 {
+    use BelongsToBranch;
     use InteractsWithMedia;
 
     /**
@@ -23,6 +25,7 @@ class WorkOrder extends Model implements HasMedia
      */
     protected $fillable = [
         'code',
+        'branch_id',
         'vehicle_id',
         'order_type',
         'warranty_card_id',
@@ -302,5 +305,24 @@ class WorkOrder extends Model implements HasMedia
         }
 
         return rtrim(rtrim(number_format($value, 2, ',', '.'), '0'), ',');
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (WorkOrder $order): void {
+            if ($order->branch_id === null) {
+                $order->branch_id = self::defaultBranchIdForCurrentUser();
+            }
+        });
+
+        static::updated(function (WorkOrder $order): void {
+            if ($order->wasChanged('status')) {
+                try {
+                    app(\App\Services\MessagingService::class)->queueStatusUpdate($order);
+                } catch (\Throwable) {
+                    // Không chặn lưu RO nếu hàng đợi tin lỗi.
+                }
+            }
+        });
     }
 }
