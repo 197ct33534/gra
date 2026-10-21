@@ -23,7 +23,7 @@ class LowStockAlertWidget extends TableWidget
             ->heading('Cảnh báo phụ tùng chạm ngưỡng tồn kho')
             ->query(
                 Part::query()
-                    ->whereRaw('stock_quantity - reserved_quantity <= min_stock_alert')
+                    ->lowStock()
                     ->orderByRaw('stock_quantity - reserved_quantity'),
             )
             ->columns([

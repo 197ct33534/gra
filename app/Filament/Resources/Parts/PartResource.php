@@ -142,7 +142,7 @@ class PartResource extends Resource
                 TextColumn::make('stock_quantity')
                     ->label('Tồn kho')
                     ->badge()
-                    ->color(fn (Part $record): string => $record->stock_quantity <= $record->min_stock_alert ? 'danger' : 'success')
+                    ->color(fn (Part $record): string => $record->isLowStock() ? 'danger' : 'success')
                     ->sortable(),
                 TextColumn::make('reserved_quantity')
                     ->label('Đang giữ cho xe')
@@ -160,7 +160,7 @@ class PartResource extends Resource
                 Filter::make('low_stock')
                     ->label('Sắp hết hàng')
                     ->toggle()
-                    ->query(fn (Builder $query): Builder => $query->whereColumn('stock_quantity', '<=', 'min_stock_alert')),
+                    ->query(fn (Builder $query): Builder => $query->lowStock()),
             ])
             ->recordActions([
                 EditAction::make(),

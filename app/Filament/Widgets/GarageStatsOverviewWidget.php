@@ -43,9 +43,7 @@ class GarageStatsOverviewWidget extends StatsOverviewWidget
                 WorkOrderStatus::Qc,
             ])
             ->count();
-        $lowStockCount = Part::query()
-            ->whereColumn('stock_quantity', '<=', 'min_stock_alert')
-            ->count();
+        $lowStockCount = Part::query()->lowStock()->count();
         // Công nợ bảo hiểm theo dõi riêng ở InsuranceReceivableWidget.
         $debt = (float) Invoice::query()
             ->forPayer(InvoicePayer::Customer)

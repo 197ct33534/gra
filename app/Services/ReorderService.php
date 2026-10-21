@@ -25,7 +25,7 @@ class ReorderService
             ->map(function (Part $part): ?array {
                 $available = $part->availableQuantity();
                 $min = (int) $part->min_stock_alert;
-                if ($available > $min) {
+                if (! $part->isLowStock()) {
                     return null;
                 }
 

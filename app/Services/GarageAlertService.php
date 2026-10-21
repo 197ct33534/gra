@@ -52,7 +52,7 @@ class GarageAlertService
     public function lowStockParts(): Collection
     {
         return Part::query()
-            ->whereRaw('stock_quantity - reserved_quantity <= min_stock_alert')
+            ->lowStock()
             ->orderByRaw('stock_quantity - reserved_quantity')
             ->get();
     }
