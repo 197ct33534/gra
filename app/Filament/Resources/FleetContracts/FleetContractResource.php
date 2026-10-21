@@ -51,7 +51,8 @@ class FleetContractResource extends Resource
                 ->relationship(
                     'customer',
                     'name',
-                    fn (Builder $q): Builder => $q->where('customer_type', CustomerType::Company)->orderBy('name'),
+                    // Filament truyền tham số theo tên: phải là $query.
+                    fn (Builder $query): Builder => $query->where('customer_type', CustomerType::Company)->orderBy('name'),
                 )
                 ->searchable()
                 ->preload()

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\LoyaltyTier;
 use App\Models\Customer;
+use App\Models\Invoice;
 use App\Models\LoyaltyTransaction;
 use App\Models\WorkOrder;
 use DomainException;
@@ -64,7 +65,7 @@ class LoyaltyService
     /**
      * Đổi điểm lấy giảm trừ trên hóa đơn còn nợ.
      */
-    public function redeemOnInvoice(\App\Models\Invoice $invoice, int $points, ?int $actorId = null): LoyaltyTransaction
+    public function redeemOnInvoice(Invoice $invoice, int $points, ?int $actorId = null): LoyaltyTransaction
     {
         if ($points < 1) {
             throw new DomainException('Số điểm đổi phải lớn hơn 0.');
@@ -93,8 +94,8 @@ class LoyaltyService
         }
 
         return DB::transaction(function () use ($invoice, $customer, $points, $credit, $actorId): LoyaltyTransaction {
-            /** @var \App\Models\Invoice $locked */
-            $locked = \App\Models\Invoice::query()->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
+            /** @var Invoice $locked */
+            $locked = Invoice::query()->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
 
             $tx = $this->adjust(
                 $customer->fresh(),

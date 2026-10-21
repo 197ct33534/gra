@@ -9,6 +9,7 @@ use App\Models\Vehicle;
 use App\Models\VehicleRecommendation;
 use App\Models\WorkOrder;
 use App\Services\QuickReceptionService;
+use App\Support\BodyInspection;
 use App\Support\VietnameseMoney;
 use BackedEnum;
 use DomainException;
@@ -143,7 +144,7 @@ class QuickReception extends Page
                             ->columns(2),
                         CheckboxList::make('body_damage_zones')
                             ->label('Vùng thân vỏ có hư hại (tick nhanh)')
-                            ->options(\App\Support\BodyInspection::zones())
+                            ->options(BodyInspection::zones())
                             ->columns(3)
                             ->helperText('Chi tiết tình trạng chỉnh lại trên lệnh sửa nếu cần.'),
                         SpatieMediaLibraryFileUpload::make('reception_photos')

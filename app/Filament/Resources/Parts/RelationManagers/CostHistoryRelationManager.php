@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Parts\RelationManagers;
 
 use App\Models\GoodsReceiptItem;
+use App\Models\User;
 use App\Support\VietnameseMoney;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
@@ -18,7 +19,7 @@ class CostHistoryRelationManager extends RelationManager
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        return \App\Models\User::currentCanSeeCosts();
+        return User::currentCanSeeCosts();
     }
 
     public function table(Table $table): Table

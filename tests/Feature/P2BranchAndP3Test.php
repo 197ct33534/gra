@@ -8,7 +8,6 @@ use App\Enums\WorkOrderStatus;
 use App\Filament\Pages\NpsReport;
 use App\Filament\Resources\Branches\Pages\ListBranches;
 use App\Models\Branch;
-use App\Models\Customer;
 use App\Models\CustomerMessage;
 use App\Models\Invoice;
 use App\Models\User;

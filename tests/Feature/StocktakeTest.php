@@ -6,7 +6,6 @@ use App\Enums\StocktakeStatus;
 use App\Enums\StockTransactionType;
 use App\Models\Part;
 use App\Models\Stocktake;
-use App\Models\StocktakeItem;
 use App\Models\StockTransaction;
 use App\Models\User;
 use App\Services\InventoryService;

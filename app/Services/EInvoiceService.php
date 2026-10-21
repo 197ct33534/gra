@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
+use App\EInvoice\EInvoiceException;
+use App\EInvoice\EInvoiceGateway;
 use App\Enums\ActivityEvent;
 use App\Enums\CustomerMessageStatus;
 use App\Enums\CustomerMessageType;
 use App\Enums\EInvoiceStatus;
 use App\Enums\InvoicePayer;
 use App\Enums\PaymentStatus;
-use App\EInvoice\EInvoiceException;
-use App\EInvoice\EInvoiceGateway;
 use App\Models\Customer;
 use App\Models\CustomerMessage;
 use App\Models\Invoice;

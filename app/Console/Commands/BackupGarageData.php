@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
@@ -20,8 +21,8 @@ class BackupGarageData extends Command
 
     public function handle(): int
     {
-        $keepDays = (int) ($this->option('keep') ?: env('BACKUP_KEEP_DAYS', 14));
-        $diskName = (string) env('BACKUP_DISK', 'local');
+        $keepDays = (int) ($this->option('keep') ?: config('garage.backup.keep_days', 14));
+        $diskName = (string) config('garage.backup.disk', 'local');
         $stamp = now()->format('Ymd_His');
         $folder = 'backups/'.$stamp;
 
@@ -45,7 +46,7 @@ class BackupGarageData extends Command
         return self::SUCCESS;
     }
 
-    private function backupDatabase(\Illuminate\Contracts\Filesystem\Filesystem $disk, string $folder): void
+    private function backupDatabase(Filesystem $disk, string $folder): void
     {
         $connection = config('database.default');
 
@@ -91,12 +92,21 @@ class BackupGarageData extends Command
         throw new \RuntimeException("Chưa hỗ trợ backup cho connection [{$connection}].");
     }
 
-    private function backupMedia(\Illuminate\Contracts\Filesystem\Filesystem $disk, string $folder, string $stamp): void
+    private function backupMedia(Filesystem $disk, string $folder, string $stamp): void
     {
         $publicPath = storage_path('app/public');
 
         if (! is_dir($publicPath)) {
             $this->warn('Không có storage/app/public — bỏ qua media.');
+
+            return;
+        }
+
+        $files = File::allFiles($publicPath);
+
+        // ZipArchive không ghi file khi zip rỗng: gara chưa có ảnh nào thì bỏ qua, không làm hỏng cả bản backup.
+        if ($files === []) {
+            $this->warn('storage/app/public chưa có file — bỏ qua media.');
 
             return;
         }
@@ -107,8 +117,6 @@ class BackupGarageData extends Command
         if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
             throw new \RuntimeException('Không tạo được file zip media.');
         }
-
-        $files = File::allFiles($publicPath);
 
         foreach ($files as $file) {
             $relative = ltrim(str_replace($publicPath, '', $file->getPathname()), DIRECTORY_SEPARATOR);
@@ -121,7 +129,7 @@ class BackupGarageData extends Command
         $this->line('✓ Media ('.count($files).' file)');
     }
 
-    private function pruneOldBackups(\Illuminate\Contracts\Filesystem\Filesystem $disk, int $keepDays): void
+    private function pruneOldBackups(Filesystem $disk, int $keepDays): void
     {
         if ($keepDays < 1) {
             return;

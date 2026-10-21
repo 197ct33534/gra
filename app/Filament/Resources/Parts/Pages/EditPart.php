@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Parts\Pages;
 
 use App\Filament\Resources\Parts\PartResource;
 use App\Models\Part;
+use App\Models\User;
 use App\Services\InventoryService;
 use App\Services\PartCostHistoryService;
 use App\Support\VietnameseMoney;
@@ -27,7 +28,7 @@ class EditPart extends EditRecord
     {
         parent::mount($record);
 
-        if (! $this->getRecord() instanceof Part || ! \App\Models\User::currentCanSeeCosts()) {
+        if (! $this->getRecord() instanceof Part || ! User::currentCanSeeCosts()) {
             return;
         }
 

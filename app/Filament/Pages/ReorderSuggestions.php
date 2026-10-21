@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Part;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\ReorderService;
@@ -42,7 +43,7 @@ class ReorderSuggestions extends Page
     }
 
     /**
-     * @return list<array{part: \App\Models\Part, available: int, suggest_qty: int, gap: int}>
+     * @return list<array{part: Part, available: int, suggest_qty: int, gap: int}>
      */
     public function getSuggestions(): array
     {

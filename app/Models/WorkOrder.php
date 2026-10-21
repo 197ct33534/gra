@@ -8,6 +8,7 @@ use App\Enums\WorkOrderItemType;
 use App\Enums\WorkOrderStatus;
 use App\Enums\WorkOrderType;
 use App\Models\Concerns\BelongsToBranch;
+use App\Services\MessagingService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -320,10 +321,17 @@ class WorkOrder extends Model implements HasMedia
             }
         });
 
+        // Báo giá lại sau khi khách từ chối: mở lại link duyệt từ xa cho báo giá mới (giữ lý do từ chối để tham khảo).
+        static::saving(function (WorkOrder $order): void {
+            if ($order->isDirty('status') && $order->status === WorkOrderStatus::Quoted && $order->quote_rejected_at !== null) {
+                $order->quote_rejected_at = null;
+            }
+        });
+
         static::updated(function (WorkOrder $order): void {
             if ($order->wasChanged('status')) {
                 try {
-                    app(\App\Services\MessagingService::class)->queueStatusUpdate($order);
+                    app(MessagingService::class)->queueStatusUpdate($order);
                 } catch (\Throwable) {
                     // Không chặn lưu RO nếu hàng đợi tin lỗi.
                 }

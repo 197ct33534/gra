@@ -7,6 +7,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\StockTransactionType;
 use App\Enums\WorkOrderItemType;
 use App\Enums\WorkOrderStatus;
+use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Part;
 use App\Models\Service;
@@ -108,7 +109,7 @@ class WorkOrderService
             if ($payer === InvoicePayer::Customer && $paid + 0.001 < $total) {
                 $locked->loadMissing('vehicle.customer');
                 $customer = $locked->vehicle?->customer;
-                if ($customer instanceof \App\Models\Customer) {
+                if ($customer instanceof Customer) {
                     app(FleetService::class)->assertWithinCreditLimit($customer, round($total - $paid, 2));
                 }
             }

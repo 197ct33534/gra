@@ -25,6 +25,7 @@ use App\Models\WorkOrderItem;
 use App\Services\CustomerPortalService;
 use App\Services\QuoteApprovalService;
 use App\Services\WorkOrderService;
+use App\Support\BodyInspection;
 use App\Support\VietnameseMoney;
 use BackedEnum;
 use Closure;
@@ -158,7 +159,7 @@ class WorkOrderResource extends Resource
             Select::make('branch_id')
                 ->label('Chi nhánh')
                 ->relationship('branch', 'name')
-                ->default(fn (): ?int => \App\Models\WorkOrder::defaultBranchIdForCurrentUser())
+                ->default(fn (): ?int => WorkOrder::defaultBranchIdForCurrentUser())
                 ->searchable()
                 ->preload()
                 ->native(false)
@@ -300,13 +301,13 @@ class WorkOrderResource extends Resource
                 ->schema([
                     Select::make('zone')
                         ->label('Vùng xe')
-                        ->options(\App\Support\BodyInspection::zones())
+                        ->options(BodyInspection::zones())
                         ->required()
                         ->native(false)
                         ->searchable(),
                     Select::make('condition')
                         ->label('Tình trạng')
-                        ->options(\App\Support\BodyInspection::conditions())
+                        ->options(BodyInspection::conditions())
                         ->required()
                         ->native(false)
                         ->default('scratch'),
@@ -319,8 +320,8 @@ class WorkOrderResource extends Resource
                 ->reorderable()
                 ->collapsible()
                 ->itemLabel(fn (array $state): ?string => filled($state['zone'] ?? null)
-                    ? \App\Support\BodyInspection::zoneLabel((string) $state['zone'])
-                        .' — '.\App\Support\BodyInspection::conditionLabel((string) ($state['condition'] ?? 'other'))
+                    ? BodyInspection::zoneLabel((string) $state['zone'])
+                        .' — '.BodyInspection::conditionLabel((string) ($state['condition'] ?? 'other'))
                     : null)
                 ->addActionLabel('Thêm vùng hư hại')
                 ->columnSpanFull(),
@@ -458,7 +459,7 @@ class WorkOrderResource extends Resource
                                 ->relationship(
                                     'supplier',
                                     'name',
-                                    fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query->active()->orderBy('name'),
+                                    fn (Builder $query): Builder => $query->active()->orderBy('name'),
                                 )
                                 ->getOptionLabelFromRecordUsing(fn ($record): string => $record->displayLabel())
                                 ->searchable()

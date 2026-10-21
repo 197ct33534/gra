@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Appointments\Pages;
 
+use App\Enums\AppointmentStatus;
 use App\Filament\Resources\Appointments\AppointmentResource;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
@@ -17,7 +18,7 @@ class ViewAppointment extends ViewRecord
             AppointmentResource::cancelAction(),
             AppointmentResource::noShowAction(),
             EditAction::make()
-                ->visible(fn (): bool => $this->getRecord()->status === \App\Enums\AppointmentStatus::Scheduled),
+                ->visible(fn (): bool => $this->getRecord()->status === AppointmentStatus::Scheduled),
         ];
     }
 }

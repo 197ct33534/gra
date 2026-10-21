@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Customers;
 
 use App\Enums\CustomerType;
+use App\Enums\LoyaltyTier;
 use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\Customers\Pages\CreateCustomer;
 use App\Filament\Resources\Customers\Pages\EditCustomer;
@@ -25,8 +26,8 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -110,7 +111,7 @@ class CustomerResource extends Resource
                     ->label('Hạng thành viên')
                     ->disabled()
                     ->dehydrated(false)
-                    ->formatStateUsing(fn ($state): string => $state instanceof \App\Enums\LoyaltyTier
+                    ->formatStateUsing(fn ($state): string => $state instanceof LoyaltyTier
                         ? $state->getLabel()
                         : (string) ($state ?? 'Thành viên'))
                     ->visibleOn('edit'),

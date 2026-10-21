@@ -32,6 +32,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Carbon;
 use UnitEnum;
 
 class PurchaseOrderResource extends Resource
@@ -271,7 +272,7 @@ class PurchaseOrderResource extends Resource
                     $user->id,
                     [],
                     $data['invoice_no_supplier'] ?? null,
-                    isset($data['invoice_date']) ? \Illuminate\Support\Carbon::parse($data['invoice_date']) : null,
+                    isset($data['invoice_date']) ? Carbon::parse($data['invoice_date']) : null,
                     $data['notes'] ?? null,
                     isset($data['vat_rate']) ? (int) $data['vat_rate'] : null,
                 );

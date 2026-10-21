@@ -10,6 +10,7 @@ use App\Models\Part;
 use App\Models\Service;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderItem;
+use App\Support\BodyInspection;
 use App\Support\VietnameseMoney;
 use Illuminate\Support\Collection;
 
@@ -112,7 +113,7 @@ class WorkOrderPrintService
             'odo' => number_format((int) $workOrder->reception_odo, 0, ',', '.').' km',
             'promisedAt' => $workOrder->promised_at?->timezone(config('garage.timezone'))->format('H:i — d/m/Y'),
             'lines' => $lines,
-            'bodyInspection' => \App\Support\BodyInspection::summaryLines(
+            'bodyInspection' => BodyInspection::summaryLines(
                 is_array($workOrder->body_inspection) ? $workOrder->body_inspection : null
             ),
         ];

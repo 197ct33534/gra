@@ -8,6 +8,7 @@ use App\Filament\Resources\Appointments\Pages\EditAppointment;
 use App\Filament\Resources\Appointments\Pages\ListAppointments;
 use App\Filament\Resources\Appointments\Pages\ViewAppointment;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
+use App\Helpers\LicensePlateHelper;
 use App\Models\Appointment;
 use App\Models\User;
 use App\Services\AppointmentService;
@@ -30,7 +31,6 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 use UnitEnum;
 
 class AppointmentResource extends Resource
@@ -138,9 +138,15 @@ class AppointmentResource extends Resource
                     ->label('Biển số')
                     ->state(fn (Appointment $r): string => $r->displayPlate() ?? '—')
                     ->searchable(query: function (Builder $query, string $search): Builder {
-                        return $query->where(function (Builder $q) use ($search): void {
-                            $q->where('walk_in_plate', 'like', "%{$search}%")
-                                ->orWhereHas('vehicle', fn (Builder $v): Builder => $v->where('license_plate', 'like', "%{$search}%"));
+                        // Như các ô tìm xe khác: "51k12345", "51K-123.45" đều ra cùng một xe.
+                        $plate = LicensePlateHelper::clean($search);
+
+                        return $query->where(function (Builder $q) use ($search, $plate): void {
+                            if ($plate !== '') {
+                                $q->whereRaw(LicensePlateHelper::cleanedColumnSql('appointments.walk_in_plate').' like ?', ['%'.$plate.'%']);
+                            }
+
+                            $q->orWhereHas('vehicle', fn (Builder $v): Builder => LicensePlateHelper::applyVehicleSearch($v, $search));
                         });
                     }),
                 TextColumn::make('guest')

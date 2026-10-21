@@ -14,6 +14,11 @@ return [
     'advisor_max_discount_percent' => (float) env('GARAGE_ADVISOR_MAX_DISCOUNT', 10),
     // Thợ hưởng mặc định bao nhiêu % tiền công hạng mục mình làm (đè được theo từng thợ hoặc khoán cố định theo dịch vụ).
     'default_commission_percent' => (float) env('GARAGE_DEFAULT_COMMISSION', 30),
+    // Đọc qua config (không gọi env() trong code) để vẫn đúng khi chạy `php artisan config:cache`.
+    'backup' => [
+        'disk' => env('BACKUP_DISK', 'local'),
+        'keep_days' => (int) env('BACKUP_KEEP_DAYS', 14),
+    ],
     'maintenance' => [
         'interval_km' => (int) env('GARAGE_SERVICE_INTERVAL_KM', 5000),
         'interval_months' => (int) env('GARAGE_SERVICE_INTERVAL_MONTHS', 3),

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\WorkOrderStatus;
+use App\Models\User;
 use App\Models\WorkOrder;
 use DomainException;
 use Illuminate\Support\Facades\DB;
@@ -62,7 +63,7 @@ class QuoteApprovalService
             }
 
             $actorId = (int) ($order->service_advisor_id
-                ?: \App\Models\User::query()->where('role', 'admin')->value('id')
+                ?: User::query()->where('role', 'admin')->value('id')
                 ?: 0);
 
             $warnings = app(WorkOrderService::class)->approveWorkOrder($order, $actorId);

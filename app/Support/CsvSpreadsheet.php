@@ -4,6 +4,7 @@ namespace App\Support;
 
 use DomainException;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class CsvSpreadsheet
 {
@@ -72,7 +73,7 @@ final class CsvSpreadsheet
      * @param  list<string>  $headers
      * @param  list<list<string|int|float|null>>  $rows
      */
-    public static function streamDownload(string $filename, array $headers, array $rows = []): \Symfony\Component\HttpFoundation\StreamedResponse
+    public static function streamDownload(string $filename, array $headers, array $rows = []): StreamedResponse
     {
         return response()->streamDownload(function () use ($headers, $rows): void {
             $out = fopen('php://output', 'w');

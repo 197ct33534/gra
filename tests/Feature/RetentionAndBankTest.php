@@ -10,6 +10,7 @@ use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Filament\Pages\CustomerCare;
 use App\Filament\Resources\BankTransactions\Pages\ListBankTransactions;
+use App\Messaging\MessageGateway;
 use App\Models\ActivityLog;
 use App\Models\BankTransaction;
 use App\Models\CustomerMessage;
@@ -123,14 +124,14 @@ class RetentionAndBankTest extends TestCase
             'garage.messaging.driver' => 'zalo_zns',
             'garage.messaging_retry.max_attempts' => 1,
         ]);
-        $this->app->forgetInstance(\App\Messaging\MessageGateway::class);
+        $this->app->forgetInstance(MessageGateway::class);
         $this->artisan('garage:send-messages')->expectsOutput('Đã gửi 0 tin, lỗi 1 tin.')->assertSuccessful();
         $message = CustomerMessage::query()->sole();
         $this->assertSame(CustomerMessageStatus::Failed, $message->status);
         $this->assertStringContainsString('ZALO_OA', $message->error);
 
         config(['garage.messaging.driver' => 'log']);
-        $this->app->forgetInstance(\App\Messaging\MessageGateway::class);
+        $this->app->forgetInstance(MessageGateway::class);
         $this->app->forgetInstance(MessagingService::class);
         $this->assertTrue(app(MessagingService::class)->deliver($message));
         $message->refresh();

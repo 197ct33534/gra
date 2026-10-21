@@ -44,4 +44,23 @@ class BackupGarageDataTest extends TestCase
         @unlink($public.'/probe.txt');
         @unlink($sqlitePath);
     }
+
+    public function test_backup_uses_the_disk_from_config_so_config_cache_does_not_break_it(): void
+    {
+        Storage::fake('local');
+        Storage::fake('offsite');
+        config(['garage.backup.disk' => 'offsite']);
+
+        $sqlitePath = database_path('backup-test.sqlite');
+        touch($sqlitePath);
+        config(['database.default' => 'sqlite']);
+        config(['database.connections.sqlite.database' => $sqlitePath]);
+
+        $this->assertSame(0, Artisan::call('garage:backup'));
+
+        $this->assertNotEmpty(Storage::disk('offsite')->directories('backups'));
+        $this->assertSame([], Storage::disk('local')->directories('backups'));
+
+        @unlink($sqlitePath);
+    }
 }

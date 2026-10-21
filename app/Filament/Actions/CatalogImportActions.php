@@ -3,6 +3,7 @@
 namespace App\Filament\Actions;
 
 use App\Services\CatalogImportService;
+use App\Support\CsvSpreadsheet;
 use Filament\Actions\Action;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
@@ -22,7 +23,7 @@ final class CatalogImportActions
             ->action(function (): StreamedResponse {
                 $svc = app(CatalogImportService::class);
 
-                return \App\Support\CsvSpreadsheet::streamDownload(
+                return CsvSpreadsheet::streamDownload(
                     'mau-khach-hang.csv',
                     $svc->customerTemplateHeaders(),
                     [[
@@ -72,7 +73,7 @@ final class CatalogImportActions
             ->action(function (): StreamedResponse {
                 $svc = app(CatalogImportService::class);
 
-                return \App\Support\CsvSpreadsheet::streamDownload(
+                return CsvSpreadsheet::streamDownload(
                     'mau-phu-tung.csv',
                     $svc->partTemplateHeaders(),
                     [[

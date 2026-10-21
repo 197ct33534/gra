@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Enums\CashMovementCategory;
+use App\Enums\CashMovementDirection;
 use App\Enums\CashSessionStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\WorkOrderStatus;
@@ -29,9 +31,9 @@ class CashAndVatTest extends TestCase
 
         $cash->recordMovement(
             $session,
-            \App\Enums\CashMovementDirection::Out,
+            CashMovementDirection::Out,
             50000,
-            \App\Enums\CashMovementCategory::PettyExpense,
+            CashMovementCategory::PettyExpense,
             $admin->id,
             null,
             'Mua nước',

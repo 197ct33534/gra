@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\CustomerMessageType;
 use App\Enums\WorkOrderStatus;
 use App\Filament\Pages\FinancialReports;
-use App\Models\CustomerMessage;
 use App\Models\User;
 use App\Models\WorkOrder;
 use App\Services\FinancialReportService;

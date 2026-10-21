@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enums\PaymentStatus;
-use App\Enums\StockTransferStatus;
 use App\Enums\StockTransactionType;
+use App\Enums\StockTransferStatus;
 use App\Filament\Pages\FinancialReports;
 use App\Filament\Pages\ReorderSuggestions;
 use App\Filament\Pages\StockTransfers;
 use App\Filament\Pages\TechnicianMyJobs;
 use App\Models\Branch;
-use App\Models\Customer;
 use App\Models\CustomerWalletTransaction;
 use App\Models\Invoice;
 use App\Models\Part;

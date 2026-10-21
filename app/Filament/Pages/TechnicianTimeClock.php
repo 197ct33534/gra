@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\TechnicianTimeLog;
 use App\Models\User;
 use App\Models\WorkOrder;
 use App\Services\TimeClockService;
@@ -10,6 +11,7 @@ use DomainException;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Database\Eloquent\Collection;
 use UnitEnum;
 
 class TechnicianTimeClock extends Page
@@ -35,7 +37,7 @@ class TechnicianTimeClock extends Page
         return $user !== null && ($user->isTechnician() || $user->isAdmin() || $user->isServiceAdvisor());
     }
 
-    public function getOpenLog(): ?\App\Models\TechnicianTimeLog
+    public function getOpenLog(): ?TechnicianTimeLog
     {
         $user = User::current();
         if ($user === null) {
@@ -46,7 +48,7 @@ class TechnicianTimeClock extends Page
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, WorkOrder>
+     * @return Collection<int, WorkOrder>
      */
     public function getAvailableOrders()
     {

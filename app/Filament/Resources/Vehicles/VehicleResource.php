@@ -16,6 +16,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
@@ -99,13 +100,13 @@ class VehicleResource extends Resource
             ->minValue(0)
             ->suffix('km')
             ->default(0);
-        $components[] = \Filament\Forms\Components\DatePicker::make('registration_expires_at')
+        $components[] = DatePicker::make('registration_expires_at')
             ->label('Hạn đăng ký xe')
             ->native(false);
-        $components[] = \Filament\Forms\Components\DatePicker::make('insurance_expires_at')
+        $components[] = DatePicker::make('insurance_expires_at')
             ->label('Hạn BH TNDS / vật chất')
             ->native(false);
-        $components[] = \Filament\Forms\Components\DatePicker::make('inspection_expires_at')
+        $components[] = DatePicker::make('inspection_expires_at')
             ->label('Hạn đăng kiểm')
             ->native(false);
         $components[] = TextInput::make('service_interval_km')

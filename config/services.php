@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    // Zalo ZNS (GARAGE_MESSAGING_DRIVER=zalo_zns).
+    'zalo' => [
+        'oa_id' => env('ZALO_OA_ID'),
+        'access_token' => env('ZALO_OA_ACCESS_TOKEN'),
+        'default_template_id' => env('ZALO_ZNS_TEMPLATE_ID'),
+        'endpoint' => env('ZALO_ZNS_ENDPOINT', 'https://business.openapi.zalo.me/message/template'),
+    ],
+
 ];

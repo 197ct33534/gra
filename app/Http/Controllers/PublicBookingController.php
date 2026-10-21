@@ -7,6 +7,8 @@ use App\Models\Customer;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\AppointmentService;
+use App\Services\MessagingService;
+use App\Services\QuickReceptionService;
 use DomainException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +26,9 @@ class PublicBookingController extends Controller
 
     public function store(Request $request, AppointmentService $appointments): RedirectResponse
     {
+        // Khách hay gõ "0933 222 111" / "0933.222.111": bỏ dấu trước khi kiểm tra định dạng.
+        $request->merge(['phone' => preg_replace('/[\s.\-]/', '', (string) $request->input('phone')) ?? $request->input('phone')]);
+
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20', 'regex:/^(0|\+84)(3|5|7|8|9)\d{8}$/'],
@@ -35,13 +40,12 @@ class PublicBookingController extends Controller
             'scheduled_start.after' => 'Giờ hẹn phải ở tương lai.',
         ]);
 
-        $phone = preg_replace('/[\s.\-]/', '', $data['phone']) ?? $data['phone'];
+        // Khách gõ "+84..." hoặc có dấu cách; DB lưu "0...". Biển số trong DB có dấu chấm/gạch.
+        $phone = MessagingService::normalizePhone($data['phone']) ?? (preg_replace('/[\s.\-]/', '', $data['phone']) ?? $data['phone']);
         $plate = LicensePlateHelper::clean($data['license_plate']);
 
         $customer = Customer::query()->where('phone', $phone)->first();
-        $vehicle = $plate !== ''
-            ? Vehicle::query()->where('license_plate', $plate)->first()
-            : null;
+        $vehicle = QuickReceptionService::findVehicle($data['license_plate']);
 
         if ($vehicle instanceof Vehicle && $customer instanceof Customer && (int) $vehicle->customer_id !== (int) $customer->id) {
             // Biển số thuộc khách khác — vẫn nhận walk-in, để cố vấn xử lý.

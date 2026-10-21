@@ -7,6 +7,7 @@ use App\Filament\Resources\Stocktakes\Pages\CreateStocktake;
 use App\Filament\Resources\Stocktakes\Pages\EditStocktake;
 use App\Filament\Resources\Stocktakes\Pages\ListStocktakes;
 use App\Filament\Resources\Stocktakes\Pages\ViewStocktake;
+use App\Models\Part;
 use App\Models\Stocktake;
 use App\Models\User;
 use App\Services\InventoryService;
@@ -70,7 +71,7 @@ class StocktakeResource extends Resource
                         ->formatStateUsing(function (mixed $state, $record): string {
                             $part = $record?->part;
                             if ($part === null && filled($state)) {
-                                $part = \App\Models\Part::query()->find($state);
+                                $part = Part::query()->find($state);
                             }
 
                             return $part ? $part->sku.' — '.$part->name : (string) $state;
