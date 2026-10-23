@@ -55,7 +55,7 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'role' => UserRole::class,
             'commission_rate' => 'decimal:2',
-            'onboarding_tour_seen_at' => 'datetime',
+            'onboarding_tours_seen' => 'array',
         ];
     }
 
@@ -102,6 +102,25 @@ class User extends Authenticatable implements FilamentUser
     public function canSeeMoney(): bool
     {
         return ! $this->isTechnician();
+    }
+
+    /**
+     * Robot dẫn đường: tour của trang này đã xem (hoặc bỏ qua) chưa.
+     */
+    public function hasSeenTour(string $tour): bool
+    {
+        return array_key_exists($tour, $this->onboarding_tours_seen ?? []);
+    }
+
+    public function markTourSeen(string $tour): void
+    {
+        if ($this->hasSeenTour($tour)) {
+            return;
+        }
+
+        $this->forceFill([
+            'onboarding_tours_seen' => [...($this->onboarding_tours_seen ?? []), $tour => now()->toDateTimeString()],
+        ])->save();
     }
 
     /**

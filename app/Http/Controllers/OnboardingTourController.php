@@ -3,20 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Support\OnboardingTours;
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 
 class OnboardingTourController extends Controller
 {
     /**
-     * Ghi nhận tài khoản đã xem (hoặc bỏ qua) tour Robot, để lần đăng nhập sau không tự bật lại.
+     * Ghi nhận tài khoản đã xem (hoặc bỏ qua) tour Robot của một trang, để lần sau không tự bật lại.
      */
-    public function seen(): Response
+    public function seen(Request $request): Response
     {
-        $user = User::current();
+        $data = $request->validate([
+            'tour' => ['required', 'string', Rule::in(OnboardingTours::KEYS)],
+        ]);
 
-        if ($user instanceof User && $user->onboarding_tour_seen_at === null) {
-            $user->forceFill(['onboarding_tour_seen_at' => now()])->save();
-        }
+        User::current()?->markTourSeen($data['tour']);
 
         return response()->noContent();
     }
