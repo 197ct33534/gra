@@ -60,7 +60,8 @@ class GarageStatsOverviewWidget extends StatsOverviewWidget
             Stat::make('Xe đang tại xưởng', (string) $workshopCount)
                 ->description('Đang chẩn đoán, sửa hoặc kiểm tra')
                 ->descriptionIcon(Heroicon::OutlinedTruck)
-                ->color('warning'),
+                ->color('warning')
+                ->extraAttributes(['data-tour' => 'workshop-count']),
             Stat::make('Phụ tùng sắp hết', (string) $lowStockCount)
                 ->description($lowStockCount > 0 ? 'Cần nhập thêm hàng' : 'Tồn kho ổn định')
                 ->descriptionIcon(Heroicon::OutlinedCube)

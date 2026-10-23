@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BankWebhookController;
+use App\Http\Controllers\OnboardingTourController;
 use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\PublicFeedbackController;
 use App\Http\Controllers\PublicQuoteController;
@@ -45,4 +46,5 @@ Route::middleware('auth')->group(function (): void {
     Route::get('/work-orders/{workOrder}/invoice', [WorkOrderPdfController::class, 'invoice'])->name('work-orders.invoice');
     Route::get('/invoices/{invoice}/pdf', [WorkOrderPdfController::class, 'invoiceDocument'])->name('invoices.pdf');
     Route::get('/warranty-cards/{warrantyCard}/pdf', WarrantyPdfController::class)->name('warranty-cards.pdf');
+    Route::post('/onboarding-tour/seen', [OnboardingTourController::class, 'seen'])->name('onboarding-tour.seen');
 });

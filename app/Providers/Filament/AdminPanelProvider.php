@@ -10,6 +10,8 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -39,6 +41,9 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([])
             ->databaseNotifications()
+            // Robot "Cờ Lê" dẫn đường lần đầu đăng nhập + nút Trợ giúp trên thanh trên cùng để chạy lại.
+            ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): View => view('filament.onboarding-tour.help-button'))
+            ->renderHook(PanelsRenderHook::BODY_END, fn (): View => view('filament.onboarding-tour.tour'))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

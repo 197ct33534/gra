@@ -55,6 +55,7 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'role' => UserRole::class,
             'commission_rate' => 'decimal:2',
+            'onboarding_tour_seen_at' => 'datetime',
         ];
     }
 
