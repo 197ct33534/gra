@@ -1,0 +1,363 @@
+﻿"機能名
+Function","テスト項目
+Test case","確認項目
+Confirmation Items","ケース数
+Count of","確認URL・データ
+Confirmation data"
+"0. Chuẩn bị chung","Chuẩn bị dữ liệu và tài khoản trước khi chạy cả bộ test","Đọc kỹ trước khi chạy. Các case bên dưới chạy NỐI TIẾP NHAU, case sau dùng lệnh sửa chữa của case trước.
+Chuẩn bị:
+1. Nhờ dev nạp lại dữ liệu demo (lệnh ở cột bên phải). Không còn ca quỹ tiền mặt nào đang mở.
+2. Có 3 tài khoản: admin@gara.vn (Giám đốc xưởng), sa1@gara.vn (Cố vấn dịch vụ), tech1@gara.vn (Thợ - Trần Văn Toàn). Mật khẩu demo hỏi dev.
+3. Biển số xe mới dùng xuyên suốt: 51K-999.88. Nếu đã chạy rồi, đổi sang biển khác chưa có trong hệ thống (VD 51K-999.89) và dùng biển đó cho mọi case.
+4. Khi Robot 'Cờ Lê' hiện lên hướng dẫn, bấm 'Bỏ qua'.
+5. Mã lệnh có dạng RO-<ngày hôm nay>-xxxx, mã hoá đơn dạng INV-<ngày hôm nay>-xxxx. Ghi lại mã lệnh tạo ra ở case 1.1 để dùng cho các case sau.
+6. Trang Sửa lệnh KHÔNG hiện trạng thái. Khi case ghi 'Trạng thái lệnh: ...', xem ở menu 'Tiếp nhận' → 'Lệnh sửa chữa', cột 'Trạng thái' của dòng đó.
+7. Mở 1 lệnh: trong danh sách 'Lệnh sửa chữa', bấm 'Sửa' ở dòng của lệnh. Nút 'Lưu' nằm cuối trang Sửa lệnh.
+Kết quả mong đợi:
+- Đăng nhập được cả 3 tài khoản.
+- Thợ (tech1) KHÔNG thấy nhóm menu 'Thu ngân'.","1","php artisan migrate:fresh --seed
+Trang đăng nhập: /admin/login"
+"1. Tiếp nhận nhanh","1.1 Tiếp nhận xe mới lần đầu đến gara (khách mới, có gói bảo dưỡng)","Tài khoản: sa1@gara.vn
+Các bước:
+1. Menu 'Tiếp nhận' → 'Tiếp nhận nhanh'.
+2. Ô 'Biển số' gõ 51k-999.88 rồi bấm ra ngoài ô.
+3. Thấy dòng chữ xanh: 'Xe mới — nhập SĐT khách, các thông tin khác bổ sung sau.'
+4. 'SĐT khách' = 0909123456; 'Tên khách' = Khách Test; 'Hãng xe' = Toyota; 'Dòng xe' = Vios.
+5. 'ODO hiện tại' = 15000.
+6. Mục 'Gói dịch vụ dựng sẵn' tick 'Bảo dưỡng 5.000 km Vios/Yaris'.
+7. 'Cầu nâng' chọn 'Cầu 3'. 'Hẹn giao xe' chọn '+2 giờ'.
+8. Bấm nút 'Tiếp nhận xe' ở cuối trang.
+Kết quả mong đợi:
+- Thông báo xanh: 'Đã tiếp nhận 51K-999.88 — RO-...' (biển số tự viết HOA), kèm nút 'Mở lệnh' và 'In Phiếu Giao Việc'.
+- Đầu trang có khung 'Vừa tiếp nhận 51K-999.88 — RO-...' với nút 'Mở lệnh để báo giá'.
+- Form được xoá trắng để nhận xe tiếp theo.
+- GHI LẠI mã RO vừa tạo.","1","/admin/quick-reception"
+"1. Tiếp nhận nhanh","1.2 Xe mới mà không nhập số điện thoại khách","Tài khoản: sa1@gara.vn
+Các bước:
+1. Vào 'Tiếp nhận nhanh'.
+2. 'Biển số' gõ 51K-777.66 (biển chưa có), bấm ra ngoài ô.
+3. Để trống 'SĐT khách'. 'ODO hiện tại' = 5000.
+4. Bấm 'Tiếp nhận xe'.
+Kết quả mong đợi:
+- Ô 'SĐT khách' báo lỗi bắt buộc nhập.
+- KHÔNG có thông báo 'Đã tiếp nhận', không tạo lệnh mới.
+Vì sao quan trọng: không có SĐT thì không gọi được khách báo giá hay nhắc lấy xe.","1","/admin/quick-reception"
+"1. Tiếp nhận nhanh","1.3 Xe cũ: gõ biển số không dấu, hệ thống tự tìm ra xe và lịch sử","Tài khoản: sa1@gara.vn
+Các bước:
+1. Vào 'Tiếp nhận nhanh'.
+2. 'Biển số' gõ 51H89911 (không dấu chấm, không gạch), bấm ra ngoài ô.
+Kết quả mong đợi:
+- Ô biển số tự đổi thành 51H-899.11.
+- Hiện thông tin xe: 'Kia Seltos ... · Lê Văn Tuấn · 0908889911'.
+- Có dòng 'Lần trước: 08/05/2026 (RO-20260508-0001), ODO 36.500 km'.
+- Có dòng đỏ: '⚠ Xe đến hạn bảo dưỡng — gợi ý gói bảo dưỡng.'
+- KHÔNG hiện các ô SĐT / Tên khách / Hãng / Dòng xe (xe cũ không cần nhập lại).
+- Dưới ô 'ODO hiện tại' ghi 'Lần trước: 36.500 km'.","1","/admin/quick-reception"
+"1. Tiếp nhận nhanh","1.4 Xe cũ nhưng nhập ODO nhỏ hơn lần trước","Tài khoản: sa1@gara.vn
+Các bước:
+1. Vào 'Tiếp nhận nhanh', 'Biển số' = 51H-899.11, bấm ra ngoài ô.
+2. 'ODO hiện tại' = 30000 (lần trước là 36.500 km).
+3. Bấm 'Tiếp nhận xe'.
+Kết quả mong đợi:
+- Thông báo đỏ 'Chưa tiếp nhận được', nội dung: 'ODO tiếp nhận (30.000 km) nhỏ hơn ODO lần trước (36.500 km).'
+- Không tạo lệnh mới.
+Vì sao quan trọng: ODO sai làm lệch lịch nhắc bảo dưỡng và có thể che giấu xe bị tua đồng hồ.","1","/admin/quick-reception"
+"1. Tiếp nhận nhanh","1.5 Xe đang có lệnh sửa chưa bàn giao thì không cho mở lệnh thứ hai","Tài khoản: sa1@gara.vn
+Các bước:
+1. Vào 'Tiếp nhận nhanh', 'Biển số' = 30E-678.90, bấm ra ngoài ô.
+2. Đọc dòng thông tin xe.
+3. 'ODO hiện tại' = 80000, bấm 'Tiếp nhận xe'.
+Kết quả mong đợi:
+- Ngay sau bước 1 có dòng đỏ: 'Xe đang có lệnh RO-20261022-0001 (Đã báo giá) chưa bàn giao.'
+- Sau bước 3: thông báo đỏ 'Chưa tiếp nhận được' - 'Xe 30E-678.90 đang có lệnh RO-20261022-0001 chưa bàn giao.'
+Vì sao quan trọng: 2 lệnh cho cùng 1 xe sẽ tính tiền và trừ kho 2 lần.","1","/admin/quick-reception"
+"1. Tiếp nhận nhanh","1.6 Thợ không được vào màn Tiếp nhận nhanh","Tài khoản: tech1@gara.vn
+Các bước:
+1. Nhìn thanh menu bên trái.
+2. Gõ thẳng địa chỉ /admin/quick-reception vào trình duyệt.
+Kết quả mong đợi:
+- Menu KHÔNG có mục 'Tiếp nhận nhanh'.
+- Gõ địa chỉ trực tiếp ra trang lỗi 403 FORBIDDEN.","1","/admin/quick-reception"
+"2. Báo giá (Lệnh sửa chữa)","2.1 Lệnh vừa tiếp nhận đã có sẵn các dòng của gói bảo dưỡng và tính đúng tiền","Tài khoản: sa1@gara.vn
+Các bước:
+1. Menu 'Tiếp nhận' → 'Lệnh sửa chữa'. Tìm mã RO ghi ở case 1.1, bấm 'Sửa' (biểu tượng bút).
+2. Bấm tab 'Báo giá & Hạng mục sửa chữa'.
+Kết quả mong đợi:
+- Có đúng 3 dòng: 'Công bảo dưỡng cấp 5.000 km — 150.000 đ', 'Nhớt Castrol Magnatec 5W-30 — 660.000 đ' (4 lít × 165.000), 'Lọc nhớt Vios/Yaris — 95.000 đ'.
+- 'VAT' = 8 %. 'Tổng tạm tính' = 905.000 đ. 'Tổng thanh toán' = 977.400 đ.
+- Trạng thái lệnh: 'Tiếp nhận'.","1","/admin/work-orders/{id}/edit
+(id = số trong địa chỉ khi mở lệnh)"
+"2. Báo giá (Lệnh sửa chữa)","2.2 Thêm hạng mục dịch vụ và giao việc cho thợ","Tài khoản: sa1@gara.vn
+Đang ở tab 'Báo giá & Hạng mục sửa chữa' của lệnh ở case 1.1.
+Các bước:
+1. Bấm 'Thêm hạng mục'.
+2. 'Loại hạng mục' = Dịch vụ. 'Hạng mục' = 'Vệ sinh nội soi dàn lạnh'.
+3. Kiểm tra 'Đơn giá bán' tự điền 450.000.
+4. 'Thợ phụ trách' = 'Trần Văn Toàn - Thợ máy gầm chính'.
+5. Cũng chọn 'Thợ phụ trách' = Trần Văn Toàn cho dòng 'Công bảo dưỡng cấp 5.000 km'.
+6. Bấm 'Lưu' (cuối trang).
+Kết quả mong đợi:
+- Có thông báo đã lưu.
+- 'Tổng tạm tính' = 1.355.000 đ, 'Tổng thanh toán' = 1.463.400 đ.","1","/admin/work-orders/{id}/edit"
+"2. Báo giá (Lệnh sửa chữa)","2.3 Cố vấn giảm giá 1 dòng quá 10% thì bị chặn","Tài khoản: sa1@gara.vn
+Các bước:
+1. Ở dòng 'Vệ sinh nội soi dàn lạnh', ô 'Giảm giá dòng' nhập 50000.
+2. Bấm 'Lưu'.
+Kết quả mong đợi:
+- Không lưu được. Ô 'Giảm giá dòng' báo: 'Giảm giá dòng tối đa 10% (45.000 đ). Cần chủ gara duyệt.'
+- Sau khi kiểm tra xong: sửa 'Giảm giá dòng' về 0 rồi lưu lại.
+Vì sao quan trọng: chặn cố vấn tự ý giảm giá sâu làm mất lãi của gara.","1","/admin/work-orders/{id}/edit"
+"2. Báo giá (Lệnh sửa chữa)","2.4 Cố vấn sửa đơn giá thấp hơn bảng giá quá 10% thì bị chặn","Tài khoản: sa1@gara.vn
+Các bước:
+1. Ở dòng 'Vệ sinh nội soi dàn lạnh', sửa 'Đơn giá bán' từ 450.000 thành 400000.
+2. Bấm 'Lưu'.
+Kết quả mong đợi:
+- Không lưu được. Ô 'Đơn giá bán' báo: 'Giá thấp hơn bảng giá (450.000 đ) quá 10%. Cần chủ gara sửa giá.'
+- Sau khi kiểm tra xong: trả 'Đơn giá bán' về 450000 rồi lưu lại.","1","/admin/work-orders/{id}/edit"
+"2. Báo giá (Lệnh sửa chữa)","2.5 Chủ gara (admin) được giảm giá vượt 10%","Tài khoản: admin@gara.vn
+Các bước:
+1. Mở cùng lệnh, tab 'Báo giá & Hạng mục sửa chữa'.
+2. Dòng 'Vệ sinh nội soi dàn lạnh': 'Giảm giá dòng' = 50000. Bấm 'Lưu'.
+3. Kiểm tra xong: sửa lại 'Giảm giá dòng' = 0, bấm 'Lưu'.
+Kết quả mong đợi:
+- Bước 2 lưu được, không báo lỗi giới hạn 10%. 'Tổng tạm tính' = 1.305.000 đ.
+- Sau bước 3: 'Tổng tạm tính' quay về 1.355.000 đ.","1","/admin/work-orders/{id}/edit"
+"2. Báo giá (Lệnh sửa chữa)","2.6 Khách từ chối 1 hạng mục: dòng đó không tính tiền","Tài khoản: sa1@gara.vn
+Các bước:
+1. Dòng 'Vệ sinh nội soi dàn lạnh': tắt công tắc 'Khách đồng ý làm'.
+2. Ô 'Lý do khách từ chối' hiện ra, nhập: Để lần sau.
+3. Bấm 'Lưu'.
+Kết quả mong đợi:
+- Tiêu đề dòng bị gạch ngang, có chữ đỏ 'KHÁCH TỪ CHỐI · 0 đ'.
+- 'Tổng tạm tính' quay về 905.000 đ, 'Tổng thanh toán' = 977.400 đ.
+Vì sao quan trọng: dòng này sẽ được nhắc lại cho khách ở lần sau (xem case 8.2).","1","/admin/work-orders/{id}/edit"
+"2. Báo giá (Lệnh sửa chữa)","2.7 Lấy link để khách tự xem và duyệt báo giá","Tài khoản: sa1@gara.vn
+Các bước:
+1. Menu 'Tiếp nhận' → 'Lệnh sửa chữa' (danh sách). Nút này KHÔNG có trong trang Sửa lệnh, chỉ có ở từng dòng của danh sách.
+2. Ở dòng có mã RO của case 1.1, bấm nút 'Link duyệt BG (KH)'.
+Kết quả mong đợi:
+- Thông báo xanh 'Link duyệt báo giá cho khách', nội dung là 1 đường link.
+- Cột 'Trạng thái' của dòng đó đổi thành 'Đã báo giá'. Nút 'Link duyệt BG (KH)' vẫn còn.","1","/admin/work-orders"
+"3. Duyệt báo giá","3.1 Duyệt báo giá khi kho đủ hàng: phụ tùng được giữ cho xe, chưa trừ tồn","Tài khoản: sa1@gara.vn
+Chuẩn bị: mở tab mới, menu 'Kho & dịch vụ' → 'Phụ tùng', ghi lại 2 cột 'Tồn kho' và 'Đang giữ cho xe' của 'Nhớt Castrol Magnatec 5W-30' (demo mới: 60 và 4).
+Các bước:
+1. Quay lại lệnh, bấm nút 'Duyệt báo giá'.
+2. Hộp thoại 'Duyệt báo giá' hiện ra, bấm nút xác nhận.
+3. Tải lại trang 'Phụ tùng', xem lại dòng Nhớt.
+Kết quả mong đợi:
+- Thông báo xanh: 'Đã duyệt báo giá, phụ tùng đã được giữ chỗ'.
+- Trạng thái lệnh: 'Khách đã duyệt'.
+- Nhớt: 'Tồn kho' KHÔNG đổi (60), 'Đang giữ cho xe' tăng 4 (4 → 8).
+- Các dòng đã duyệt bị khoá (không sửa, không xoá được). Nút 'Thêm hạng mục' biến mất, thay bằng 'Thêm hạng mục phát sinh'.
+- Nút 'Duyệt báo giá' biến mất, xuất hiện nút 'Hủy duyệt'.
+Vì sao quan trọng: giữ hàng để xe khác không lấy mất, nhưng chỉ trừ tồn thật khi giao xe.","1","/admin/work-orders/{id}/edit
+/admin/parts"
+"3. Duyệt báo giá","3.2 Duyệt báo giá khi kho thiếu hàng: vẫn duyệt được nhưng báo cần nhập thêm","Tài khoản: sa1@gara.vn
+Các bước:
+1. 'Tiếp nhận nhanh': biển 51F-246.81, ODO 32000, bấm 'Tiếp nhận xe', bấm 'Mở lệnh để báo giá'.
+2. Tab 'Báo giá & Hạng mục sửa chữa' → 'Thêm hạng mục': 'Loại hạng mục' = Phụ tùng, 'Hạng mục' = 'Củ đề SantaFe 2.2 CRDi (khả dụng: 0 Cái)'. Bấm 'Lưu'.
+3. Bấm 'Duyệt báo giá' → xác nhận.
+4. Menu 'Tiếp nhận' → 'Bảng điều phối xe', tìm thẻ biển 51F-246.81.
+Kết quả mong đợi:
+- Thông báo vàng (không tự tắt): 'Đã duyệt — kho đang thiếu hàng, cần nhập thêm', nội dung 'Thiếu Củ đề SantaFe 2.2 CRDi: khả dụng 0, cần 1 — cần nhập thêm 1 Cái.'
+- Trạng thái lệnh: 'Khách đã duyệt'.
+- Trên Bảng điều phối, xe nằm ở cột 'Chờ phụ tùng / Cần mua ngoài'.","1","/admin/quick-reception
+/admin/workshop-board"
+"3. Duyệt báo giá","3.3 Hủy duyệt: trả hàng đang giữ về kho, lệnh quay về Tiếp nhận","Tài khoản: sa1@gara.vn
+Dùng lệnh của xe 51F-246.81 (case 3.2).
+Các bước:
+1. Mở lệnh, bấm nút 'Hủy duyệt'.
+2. Hộp thoại 'Hủy duyệt báo giá' hiện ra, bấm xác nhận.
+Kết quả mong đợi:
+- Thông báo xanh 'Đã hủy duyệt báo giá'.
+- Trạng thái lệnh: 'Tiếp nhận'. Nút 'Duyệt báo giá' xuất hiện lại.
+- Trang 'Phụ tùng': 'Củ đề SantaFe 2.2 CRDi' cột 'Đang giữ cho xe' về 0.
+- Các dòng hạng mục sửa được trở lại.","1","/admin/work-orders/{id}/edit
+/admin/parts"
+"3. Duyệt báo giá","3.4 Cố vấn không xoá được lệnh đã duyệt, chủ gara thì được","Các bước:
+1. Đăng nhập sa1@gara.vn, mở lệnh của case 1.1 (đang 'Khách đã duyệt'). Tìm nút 'Xóa' ở đầu trang.
+2. Đăng xuất, đăng nhập admin@gara.vn, mở cùng lệnh. Tìm nút 'Xóa'. KHÔNG bấm.
+Kết quả mong đợi:
+- Bước 1: KHÔNG có nút 'Xóa'.
+- Bước 2: CÓ nút 'Xóa'.
+Vì sao quan trọng: lệnh đã duyệt đang giữ hàng trong kho, cố vấn xoá sẽ làm lệch kho.","1","/admin/work-orders/{id}/edit"
+"4. Phát sinh khi đang sửa","4.1 Thợ tháo xe phát hiện thêm hư hỏng: thêm hạng mục phát sinh","Tài khoản: sa1@gara.vn
+Dùng lệnh của case 1.1 (đang 'Khách đã duyệt').
+Các bước:
+1. Tab 'Báo giá & Hạng mục sửa chữa', bấm 'Thêm hạng mục phát sinh'.
+2. Dòng mới có nhãn tím '[Phát sinh đợt 1]'. Chọn 'Loại hạng mục' = Phụ tùng, 'Hạng mục' = 'Bộ má phanh trước Vios'.
+3. Ô 'Hiện tượng thợ phát hiện khi tháo' nhập: Má phanh trước mòn hết.
+4. Bấm 'Lưu'.
+Kết quả mong đợi:
+- Lưu được. Đầu trang xuất hiện nút tím 'Chốt phát sinh đợt 1'.
+- Các dòng cũ vẫn bị khoá, chỉ dòng phát sinh sửa được.","1","/admin/work-orders/{id}/edit"
+"4. Phát sinh khi đang sửa","4.2 Chưa chốt phát sinh với khách thì không bàn giao và không lập hoá đơn được","Tài khoản: sa1@gara.vn
+Các bước:
+1. Bấm 'Hoàn thành & Bàn giao' → xác nhận.
+2. Bấm 'Tạo Hóa đơn & Thanh toán', 'Phương thức thanh toán' = Chuyển khoản, bấm 'Tạo hóa đơn'.
+Kết quả mong đợi:
+- Bước 1: thông báo đỏ 'Không thể bàn giao' - 'Còn hạng mục phát sinh đợt 1 chưa chốt với khách. Bấm 'Chốt phát sinh' trước.'
+- Bước 2: thông báo đỏ 'Không thể tạo hóa đơn' với cùng nội dung.
+- Trạng thái lệnh không đổi.
+Vì sao quan trọng: tránh thu tiền / giao xe khi khách chưa đồng ý phần làm thêm.","1","/admin/work-orders/{id}/edit"
+"4. Phát sinh khi đang sửa","4.3 Chốt phát sinh: cộng tiền và giữ thêm hàng","Tài khoản: sa1@gara.vn
+Các bước:
+1. Bấm 'Chốt phát sinh đợt 1'.
+2. Hộp thoại 'Chốt báo giá phát sinh với khách' hiện ra, bấm xác nhận.
+Kết quả mong đợi:
+- Thông báo xanh 'Đã chốt phát sinh với khách'.
+- 'Tổng tạm tính' = 1.525.000 đ, 'Tổng thanh toán' = 1.647.000 đ.
+- Nút 'Chốt phát sinh đợt 1' biến mất.
+- Trang 'Phụ tùng': 'Bộ má phanh trước Vios' cột 'Đang giữ cho xe' tăng 1.","1","/admin/work-orders/{id}/edit
+/admin/parts"
+"5. Xưởng & thợ","5.1 Thợ thấy việc được giao trong 'Việc của tôi'","Tài khoản: tech1@gara.vn
+Các bước:
+1. Menu 'Xưởng' → 'Việc của tôi'.
+Kết quả mong đợi:
+- Có thẻ '<mã RO case 1.1> — 51K-999.88', dòng dưới ghi 'Khách đã duyệt · Cầu 3 · hẹn <giờ>', có nút 'Mở lệnh'.
+- KHÔNG có xe 51F-246.81 (thợ không được giao dòng nào của xe này).","1","/admin/my-jobs"
+"5. Xưởng & thợ","5.2 Thợ bấm 'Mở lệnh' trong 'Việc của tôi' phải xem được lệnh","Tài khoản: tech1@gara.vn
+Các bước:
+1. Ở 'Việc của tôi', bấm 'Mở lệnh' trên thẻ xe 51K-999.88.
+Kết quả mong đợi:
+- Mở được trang 'Xem RO-...' (chỉ xem, không có nút 'Lưu'), thấy các tab 'Thông tin tiếp nhận', 'Báo giá & Hạng mục sửa chữa'.
+- KHÔNG ra trang lỗi 403 FORBIDDEN.
+REGRESSION GUARD: trước bản sửa 19/11/2026, nút dẫn thợ tới trang SỬA lệnh nên bị 403.
+Chi tiết: TechnicianMyJobs::orderUrl() - thợ dùng trang 'view', văn phòng dùng 'edit'.","1","/admin/my-jobs
+→ /admin/work-orders/{id}"
+"5. Xưởng & thợ","5.3 Thợ không được thấy giá tiền trên lệnh sửa","Tài khoản: tech1@gara.vn
+Các bước:
+1. Gõ địa chỉ trang xem lệnh /admin/work-orders/{id} (lệnh case 1.1).
+2. Bấm tab 'Báo giá & Hạng mục sửa chữa'.
+Kết quả mong đợi:
+- Không có ô 'Đơn giá bán', 'Giảm giá dòng', 'Thành tiền', 'Tổng tạm tính', 'Tổng thanh toán'.
+- Tiêu đề từng dòng hạng mục KHÔNG có số tiền (chỉ có tên).
+- Đăng nhập sa1@gara.vn mở cùng lệnh: tiêu đề dòng VẪN có số tiền, VD 'Công bảo dưỡng cấp 5.000 km — 150.000 đ'.
+REGRESSION GUARD: trước bản sửa 19/11/2026, thợ vẫn thấy số tiền ở tiêu đề dòng.
+Vì sao quan trọng: gara quy định thợ không biết giá bán, tránh thợ so bì hoặc báo giá riêng với khách.","1","/admin/work-orders/{id}"
+"5. Xưởng & thợ","5.4 Cố vấn kéo xe sang 'Đang sửa chữa' trên Bảng điều phối","Tài khoản: sa1@gara.vn
+Các bước:
+1. Menu 'Tiếp nhận' → 'Bảng điều phối xe'.
+2. Tìm thẻ xe 51K-999.88 (đang ở cột 'Đang sửa chữa' vì đã duyệt). Nếu đã ở đúng cột thì kéo sang 'Chờ phụ tùng / Cần mua ngoài' rồi kéo trở lại 'Đang sửa chữa'.
+Kết quả mong đợi:
+- Mỗi lần thả có thông báo xanh '<mã RO> → <tên cột>'.
+- Sau cùng thẻ nằm ở 'Đang sửa chữa'. Trạng thái lệnh: 'Đang sửa'.","1","/admin/workshop-board"
+"5. Xưởng & thợ","5.5 Thợ chuyển xe sang KCS khi sửa xong","Tài khoản: tech1@gara.vn
+Các bước:
+1. Vào 'Bảng điều phối xe'.
+2. Kéo thẻ 51K-999.88 từ 'Đang sửa chữa' sang 'KCS & Chờ giao xe'.
+Kết quả mong đợi:
+- Thông báo xanh '<mã RO> → KCS & Chờ giao xe'.
+- Trạng thái lệnh: 'Kiểm tra chất lượng'.","1","/admin/workshop-board"
+"5. Xưởng & thợ","5.6 Thợ không được kéo xe về bước báo giá","Tài khoản: tech1@gara.vn
+Các bước:
+1. Ở 'Bảng điều phối xe', kéo thẻ 51K-999.88 sang cột 'Chờ khách duyệt'.
+Kết quả mong đợi:
+- Thông báo đỏ 'Không chuyển được <mã RO>' - 'Kỹ thuật viên chỉ chuyển xe giữa Đang sửa, Chờ phụ tùng và KCS. Duyệt báo giá do cố vấn dịch vụ làm.'
+- Thẻ vẫn ở cột 'KCS & Chờ giao xe'.
+Vì sao quan trọng: kéo về báo giá sẽ huỷ duyệt và nhả hàng đang giữ trong kho.","1","/admin/workshop-board"
+"6. Hoá đơn & thu tiền","6.1 Xe đang ở KCS (sửa xong, chờ giao) thì lập được hoá đơn","Tài khoản: sa1@gara.vn
+Lệnh case 1.1 đang 'Kiểm tra chất lượng' (sau case 5.5).
+Các bước:
+1. Mở lệnh, tìm nút 'Tạo Hóa đơn & Thanh toán' ở đầu trang.
+Kết quả mong đợi:
+CẦN XÁC NHẬN: theo code hiện tại nút này BỊ ẨN khi lệnh ở 'Kiểm tra chất lượng'; chỉ hiện khi 'Khách đã duyệt', 'Đang sửa' hoặc 'Hoàn thành'. Nghĩa là xe đã kéo sang KCS thì không thu tiền được. Nghiệp vụ xác nhận: KCS có được lập hoá đơn không?
+- Ghi lại nút có hiện hay không.
+- Để chạy tiếp các case 6.x: vào 'Bảng điều phối xe', kéo thẻ 51K-999.88 về 'Đang sửa chữa' (cố vấn được phép kéo), quay lại lệnh → nút 'Tạo Hóa đơn & Thanh toán' hiện ra.
+Vì sao quan trọng: quy trình thật là sửa xong → KCS → thu tiền → giao xe; nếu KCS không thu được tiền thì quầy bị kẹt.","1","/admin/work-orders/{id}/edit
+/admin/workshop-board"
+"6. Hoá đơn & thu tiền","6.2 Thu tiền mặt khi chưa mở ca quỹ thì bị chặn","Tài khoản: sa1@gara.vn
+Chuẩn bị: chưa có ca quỹ nào đang mở (demo mới).
+Các bước:
+1. Mở lệnh case 1.1, bấm 'Tạo Hóa đơn & Thanh toán'.
+2. 'Phương thức thanh toán' = Tiền mặt. Giữ nguyên 'Số tiền đã thu'. Bấm 'Tạo hóa đơn'.
+Kết quả mong đợi:
+- Thông báo đỏ 'Không thể tạo hóa đơn' - 'Chưa mở ca quỹ tiền mặt. Vào Thu ngân → Sổ quỹ để mở ca.'
+- Không có hoá đơn nào được tạo.
+Vì sao quan trọng: thu tiền mặt ngoài ca thì cuối ngày không đối chiếu được két.","1","/admin/work-orders/{id}/edit"
+"6. Hoá đơn & thu tiền","6.3 Chỉ chủ gara mở được ca quỹ tiền mặt","Các bước:
+1. Đăng nhập sa1@gara.vn, menu 'Thu ngân' → 'Sổ quỹ tiền mặt'. Tìm nút 'Mở ca quỹ'.
+2. Đăng nhập admin@gara.vn, vào cùng trang, bấm 'Mở ca quỹ'.
+3. 'Tiền trong két lúc mở' = 1000000, bấm nút xác nhận.
+Kết quả mong đợi:
+- Bước 1: cố vấn KHÔNG thấy nút 'Mở ca quỹ'.
+- Bước 3: thông báo xanh 'Đã mở ca quỹ.' Danh sách có 1 ca mới, 'Dư đầu' 1.000.000 đ.
+- Sau khi mở, nút 'Mở ca quỹ' biến mất (mỗi lúc chỉ 1 ca).","1","/admin/cash-sessions"
+"6. Hoá đơn & thu tiền","6.4 Nhập số tiền thu lớn hơn số phải trả thì bị chặn","Tài khoản: sa1@gara.vn
+Các bước:
+1. Mở lệnh case 1.1, bấm 'Tạo Hóa đơn & Thanh toán'.
+2. Dưới ô 'Số tiền đã thu' ghi 'Phải thu: 1.647.000 đ'.
+3. 'Phương thức thanh toán' = Tiền mặt, 'Số tiền đã thu' = 1700000. Bấm 'Tạo hóa đơn'.
+Kết quả mong đợi:
+- Thông báo đỏ 'Không thể tạo hóa đơn' - 'Số tiền đã thu vượt quá số tiền phải trả (1.647.000 đ).'","1","/admin/work-orders/{id}/edit"
+"6. Hoá đơn & thu tiền","6.5 Lập hoá đơn và thu đủ tiền mặt","Tài khoản: sa1@gara.vn
+Chuẩn bị: đã mở ca quỹ (case 6.3).
+Các bước:
+1. Bấm 'Tạo Hóa đơn & Thanh toán'.
+2. 'Phương thức thanh toán' = Tiền mặt, 'Số tiền đã thu' = 1647000 (mặc định). 'Ghi chú thanh toán' để trống.
+3. Bấm 'Tạo hóa đơn'.
+4. Bấm 'Xem & In Hóa đơn' trên thông báo.
+5. Vào 'Thu ngân' → 'Sổ quỹ tiền mặt', mở ca đang mở.
+Kết quả mong đợi:
+- Thông báo xanh 'Đã tạo hóa đơn INV-...' có nút 'Xem & In Hóa đơn'. Bước 4 mở hoá đơn ở tab mới.
+- Trạng thái lệnh: 'Hoàn thành'. Đầu trang có thêm nút 'In Hóa đơn'.
+- Menu 'Thu ngân' → 'Hóa đơn & công nợ' có hoá đơn mới, tổng 1.647.000 đ, 'Trạng thái thanh toán' = 'Đã thanh toán'.
+- Sổ quỹ: 'Dự kiến trong két' = 2.647.000 đ (1.000.000 + 1.647.000).","1","/admin/work-orders/{id}/edit
+/admin/invoices
+/admin/cash-sessions"
+"6. Hoá đơn & thu tiền","6.6 Lệnh đã có hoá đơn thì không được lập thêm hoá đơn thứ hai","Tài khoản: sa1@gara.vn
+Các bước:
+1. Ngay sau case 6.5, xem đầu trang lệnh: còn nút 'Tạo Hóa đơn & Thanh toán' không?
+2. Nếu còn: bấm, chọn Chuyển khoản, bấm 'Tạo hóa đơn'. Sau đó kiểm tra 'Hóa đơn & công nợ'.
+Kết quả mong đợi:
+CẦN XÁC NHẬN: theo code hiện tại nút vẫn còn và tạo được hoá đơn THỨ HAI cho cùng lệnh (khi viết PCL đã chạy thử: ra 2 hoá đơn INV-...-0001 và -0002). Nghiệp vụ xác nhận: chặn hẳn, hay cho phép có chủ đích (VD tách hoá đơn)?
+- Nếu nghiệp vụ nói phải chặn mà vẫn tạo được → ghi FAIL.
+- Nếu đã lỡ tạo, nhờ admin xoá hoá đơn thừa trước khi chạy tiếp.
+Vì sao quan trọng: thu tiền khách 2 lần, doanh thu báo cáo bị gấp đôi.","1","/admin/work-orders/{id}/edit
+/admin/invoices"
+"7. Bàn giao xe","7.1 Bàn giao xe: trừ tồn kho thật và nhả hàng đang giữ","Tài khoản: admin@gara.vn
+Chuẩn bị: vào 'Phụ tùng', ghi lại 'Tồn kho' / 'Đang giữ cho xe' của Nhớt Castrol, Lọc nhớt Vios/Yaris, Bộ má phanh trước Vios.
+Các bước:
+1. Mở lệnh case 1.1, bấm 'Hoàn thành & Bàn giao'.
+2. Hộp thoại 'Bàn giao xe' hiện ra, bấm xác nhận.
+3. Tải lại trang 'Phụ tùng'.
+Kết quả mong đợi:
+- Thông báo xanh 'Đã bàn giao xe', có dòng 'Lãi gộp: ...' (chỉ admin thấy dòng lãi gộp).
+- Trạng thái lệnh: 'Đã bàn giao'. Trong danh sách 'Lệnh sửa chữa', dòng của lệnh có thêm nút 'Link đánh giá'.
+- Nhớt: Tồn kho giảm 4, Đang giữ giảm 4. Lọc nhớt: cả hai giảm 1. Má phanh: cả hai giảm 1.
+- Xe 51K-999.88 biến mất khỏi 'Bảng điều phối xe' và khỏi 'Việc của tôi' của tech1.","1","/admin/work-orders/{id}/edit
+/admin/parts
+/admin/workshop-board"
+"7. Bàn giao xe","7.2 Cố vấn bàn giao xe thì không thấy lãi gộp","Tài khoản: sa1@gara.vn
+Các bước:
+1. Dùng xe 51F-246.81 (case 3.3, đang 'Tiếp nhận'): xoá dòng 'Củ đề SantaFe', thêm dòng Dịch vụ 'Quét đọc lỗi OBD-II và chẩn đoán', lưu.
+2. Bấm 'Duyệt báo giá' → xác nhận.
+3. Bấm 'Tạo Hóa đơn & Thanh toán', Chuyển khoản, 'Tạo hóa đơn'.
+4. Bấm 'Hoàn thành & Bàn giao' → xác nhận.
+Kết quả mong đợi:
+- Bước 4: thông báo xanh 'Đã bàn giao xe' KHÔNG có dòng 'Lãi gộp'.
+Vì sao quan trọng: giá vốn và lãi là thông tin của chủ gara.","1","/admin/work-orders/{id}/edit"
+"7. Bàn giao xe","7.3 Bàn giao xe khi chưa lập hoá đơn / chưa thu tiền","Tài khoản: sa1@gara.vn
+Các bước:
+1. 'Tiếp nhận nhanh' xe 51H-102.37, ODO 65000, tick gói 'Thay má phanh trước Vios', 'Tiếp nhận xe', 'Mở lệnh để báo giá'.
+2. Bấm 'Duyệt báo giá' → xác nhận.
+3. KHÔNG tạo hoá đơn. Bấm ngay 'Hoàn thành & Bàn giao' → xác nhận.
+Kết quả mong đợi:
+CẦN XÁC NHẬN: theo code hiện tại hệ thống CHO bàn giao (thông báo 'Đã bàn giao xe'), lệnh không có hoá đơn nào. Nghiệp vụ xác nhận: có cần bắt buộc lập hoá đơn / thu tiền trước khi giao xe không?
+- Ghi lại hệ thống đang làm gì; nếu nghiệp vụ yêu cầu chặn mà vẫn cho → FAIL.
+Vì sao quan trọng: giao xe trước khi thu tiền là lỗ hổng thất thu phổ biến ở gara.","1","/admin/quick-reception
+/admin/work-orders/{id}/edit"
+"8. Sau bàn giao","8.1 Xe đã bàn giao quay lại: tiếp nhận được ngay, có lịch sử lần trước","Tài khoản: sa1@gara.vn
+Các bước:
+1. 'Tiếp nhận nhanh', 'Biển số' = 51K-999.88, bấm ra ngoài ô.
+Kết quả mong đợi:
+- Hiện 'Toyota Vios · Khách Test · 0909123456'.
+- Có dòng 'Lần trước: <hôm nay> (<mã RO case 1.1>), ODO 15.000 km'.
+- KHÔNG còn dòng đỏ 'Xe đang có lệnh ... chưa bàn giao'.
+- Dưới ô ODO ghi 'Lần trước: 15.000 km'.","1","/admin/quick-reception"
+"8. Sau bàn giao","8.2 Hạng mục khách từ chối lần trước được nhắc lại để tư vấn","Tài khoản: sa1@gara.vn
+Tiếp tục màn hình của case 8.1 (chưa bấm 'Tiếp nhận xe').
+Kết quả mong đợi:
+- Có dòng tím 'Lần trước khách chưa làm — tư vấn lại:' và bên dưới 'Vệ sinh nội soi dàn lạnh (<hôm nay>, Để lần sau)'.
+- Không cần bấm 'Tiếp nhận xe' cho case này.
+Vì sao quan trọng: đây là doanh thu bán thêm - khách đã từ chối lần trước là khách dễ đồng ý nhất lần sau.","1","/admin/quick-reception"

@@ -1273,6 +1273,10 @@ class WorkOrderResource extends Resource
             return new HtmlString($label.'<s style="opacity:.6">'.e($name).'</s> <span style="color:#dc2626;font-weight:700;font-size:12px">KHÁCH TỪ CHỐI · 0 đ</span>');
         }
 
+        if (! User::currentCanSeeMoney()) {
+            return new HtmlString($label.e($name));
+        }
+
         return new HtmlString($label.e($name).' — '.e(VietnameseMoney::format(VietnameseMoney::parse($state['subtotal'] ?? 0))));
     }
 

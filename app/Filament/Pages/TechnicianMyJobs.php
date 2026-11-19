@@ -65,6 +65,9 @@ class TechnicianMyJobs extends Page
 
     public function orderUrl(WorkOrder $order): string
     {
-        return WorkOrderResource::getUrl('edit', ['record' => $order]);
+        // Thợ chỉ có quyền xem lệnh; trang sửa trả 403.
+        $page = User::current()?->isTechnician() ? 'view' : 'edit';
+
+        return WorkOrderResource::getUrl($page, ['record' => $order]);
     }
 }

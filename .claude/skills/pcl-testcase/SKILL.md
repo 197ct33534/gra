@@ -43,12 +43,13 @@ case**. Engineer-language fails that: `WorkOrderStatus::Approved`, `reserveStock
 Write the **business consequence first**, then the mechanics:
 
 ```
-Lệnh sửa chữa đang ở trạng thái "Chờ khách duyệt", phụ tùng trong báo giá còn đủ tồn kho.
+Lệnh sửa chữa đang 'Đã báo giá', phụ tùng trong báo giá còn đủ tồn kho.
+Bấm 'Duyệt báo giá' → xác nhận.
 Kết quả mong đợi:
-Kho CHƯA bị trừ và chưa giữ hàng. Thợ chưa thấy việc trong "Việc của tôi".
-Chỉ khi SA bấm "Khách đã duyệt" thì phụ tùng mới được giữ.
-Vì sao quan trọng: nếu giữ hàng trước khi khách đồng ý, xe khác sẽ báo thiếu phụ tùng oan.
-Chi tiết: WorkOrderStatus, StockTransaction loại giữ hàng chỉ sinh sau khi duyệt.
+Trang 'Phụ tùng': cột 'Đang giữ cho xe' tăng đúng số lượng trong báo giá, 'Tồn kho' KHÔNG đổi.
+Tồn kho chỉ bị trừ khi bấm 'Hoàn thành & Bàn giao'.
+Vì sao quan trọng: giữ hàng để xe khác không lấy mất, nhưng chưa trừ tồn khi xe chưa giao.
+Chi tiết: WorkOrderService::approveWorkOrder() tăng reserved_quantity; completeDelivery() mới trừ stock_quantity.
 ```
 
 Rules that come out of that:

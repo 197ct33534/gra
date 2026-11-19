@@ -6,6 +6,7 @@ use App\Enums\ActivityEvent;
 use App\Enums\StockTransactionType;
 use App\Enums\UserRole;
 use App\Enums\WorkOrderStatus;
+use App\Filament\Pages\TechnicianMyJobs;
 use App\Filament\Pages\WorkshopBoard;
 use App\Filament\Resources\Parts\Pages\EditPart;
 use App\Filament\Resources\Users\Pages\CreateUser;
@@ -54,6 +55,69 @@ class RolesAndAuditTest extends TestCase
         foreach (['/admin/work-orders/'.$order->id.'/edit', '/admin/work-orders/create', '/admin/customers', '/admin/parts', '/admin/invoices', '/admin/stock-transactions', '/admin/users', '/admin/activity-logs'] as $url) {
             $this->get($url)->assertForbidden();
         }
+    }
+
+    /**
+     * REGRESSION: trước 19/11/2026 nút "Mở lệnh" ở Việc của tôi dẫn thợ tới trang sửa → 403.
+     */
+    public function test_technician_my_jobs_open_button_leads_to_a_page_the_technician_can_open(): void
+    {
+        $this->seed();
+
+        $tech = $this->user('tech1@gara.vn');
+        $order = WorkOrder::query()->where('code', 'RO-20261019-002')->firstOrFail();
+        $this->actingAs($tech);
+
+        $url = Livewire::test(TechnicianMyJobs::class)->instance()->orderUrl($order);
+
+        $this->assertStringEndsWith('/admin/work-orders/'.$order->id, $url);
+        $this->get($url)->assertOk();
+    }
+
+    public function test_office_my_jobs_open_button_still_goes_to_the_edit_page(): void
+    {
+        $this->seed();
+
+        $order = WorkOrder::query()->where('code', 'RO-20261019-002')->firstOrFail();
+        $this->actingAs($this->user('sa@gara.vn'));
+
+        $url = Livewire::test(TechnicianMyJobs::class)->instance()->orderUrl($order);
+
+        $this->assertStringEndsWith('/admin/work-orders/'.$order->id.'/edit', $url);
+    }
+
+    /**
+     * REGRESSION: trước 19/11/2026 tiêu đề từng dòng hạng mục vẫn ghi "— <thành tiền> đ" cho thợ.
+     */
+    public function test_technician_does_not_see_line_amounts_in_work_order_item_titles(): void
+    {
+        $this->seed();
+
+        [$order, $amount] = $this->orderWithLineAmount();
+
+        $this->actingAs($this->user('tech1@gara.vn'));
+        $this->get('/admin/work-orders/'.$order->id)->assertOk()->assertDontSee($amount);
+    }
+
+    public function test_advisor_still_sees_line_amounts_in_work_order_item_titles(): void
+    {
+        $this->seed();
+
+        [$order, $amount] = $this->orderWithLineAmount();
+
+        $this->actingAs($this->user('sa@gara.vn'));
+        $this->get('/admin/work-orders/'.$order->id)->assertOk()->assertSee($amount);
+    }
+
+    /**
+     * @return array{WorkOrder, string}
+     */
+    private function orderWithLineAmount(): array
+    {
+        $order = WorkOrder::query()->where('code', 'RO-20261019-002')->firstOrFail();
+        $line = $order->items()->where('subtotal', '>', 0)->firstOrFail();
+
+        return [$order, VietnameseMoney::format($line->subtotal)];
     }
 
     public function test_technician_moves_cards_only_inside_the_workshop(): void
