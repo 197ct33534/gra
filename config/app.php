@@ -55,6 +55,13 @@ return [
     'url' => env('APP_URL', 'http://localhost'),
 
     /*
+    | Chạy sau tunnel/reverse proxy (ngrok, load balancer): tin header X-Forwarded-* để Laravel sinh
+    | link https. Để trống = tắt. '*' = tin mọi proxy; hoặc danh sách IP cách nhau dấu phẩy.
+    */
+
+    'trusted_proxies' => env('TRUSTED_PROXIES'),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------

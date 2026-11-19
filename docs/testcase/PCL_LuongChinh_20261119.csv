@@ -6,6 +6,7 @@ Count of","確認URL・データ
 Confirmation data"
 "0. Chuẩn bị chung","Chuẩn bị dữ liệu và tài khoản trước khi chạy cả bộ test","Đọc kỹ trước khi chạy. Các case bên dưới chạy NỐI TIẾP NHAU, case sau dùng lệnh sửa chữa của case trước.
 Chuẩn bị:
+0. Địa chỉ app: dev gửi link https://....ngrok-free.app (link đổi mỗi lần dev mở lại tunnel). Mọi đường dẫn ở cột bên phải ghép sau link này, VD <link>/admin/login. Lần đầu mở link sẽ gặp trang cảnh báo của ngrok 'You are about to visit...' → bấm nút 'Visit Site'.
 1. Nhờ dev nạp lại dữ liệu demo (lệnh ở cột bên phải). Không còn ca quỹ tiền mặt nào đang mở.
 2. Có 3 tài khoản: admin@gara.vn (Giám đốc xưởng), sa1@gara.vn (Cố vấn dịch vụ), tech1@gara.vn (Thợ - Trần Văn Toàn). Mật khẩu demo hỏi dev.
 3. Biển số xe mới dùng xuyên suốt: 51K-999.88. Nếu đã chạy rồi, đổi sang biển khác chưa có trong hệ thống (VD 51K-999.89) và dùng biển đó cho mọi case.

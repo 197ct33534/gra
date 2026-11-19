@@ -19,6 +19,7 @@ use App\Observers\InvoiceObserver;
 use App\Observers\WorkOrderItemObserver;
 use App\Observers\WorkOrderObserver;
 use Filament\Support\Facades\FilamentTimezone;
+use Illuminate\Http\Middleware\TrustProxies;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -53,6 +54,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Đặt ở đây (không phải bootstrap/app.php) vì lúc cấu hình middleware .env chưa được nạp.
+        $trustedProxies = config('app.trusted_proxies');
+        if (is_string($trustedProxies) && $trustedProxies !== '') {
+            TrustProxies::at($trustedProxies === '*' ? '*' : array_map('trim', explode(',', $trustedProxies)));
+        }
+
         // DB lưu UTC; màn hình và ô chọn giờ (giờ hẹn giao xe) hiển thị theo giờ Việt Nam.
         FilamentTimezone::set((string) config('garage.timezone'));
 
