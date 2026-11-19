@@ -1,0 +1,16 @@
+﻿"機能名
+Function","テスト項目
+Test case","確認項目
+Confirmation Items","ケース数
+Count of","確認URL・データ
+Confirmation data"
+"<Nhóm chức năng — tên menu, VD: Lệnh sửa chữa>","<Tình huống cần kiểm tra, viết bằng lời thường>","<Điều kiện ban đầu + tài khoản đăng nhập, VD: Đăng nhập sa1@...>
+Kết quả mong đợi:
+<Điều nhân viên gara nhìn thấy trên màn hình / dữ liệu / hoá đơn. Không ghi tên class ở đây.>
+Vì sao quan trọng: <mất gì nếu case này sai — chỉ ghi khi không hiển nhiên>
+Chi tiết: <class / enum / log / config cho người chạy test>","1","<URL nếu có, VD: /admin/work-orders/{id}/edit>"
+"<Nhóm chức năng>","<Case cho tác vụ không có URL — lệnh định kỳ, job>","<Điều kiện ban đầu>
+Kết quả mong đợi:
+<Kết quả quan sát được>
+Chi tiết: <cụ thể>","1","php artisan <lệnh>
+SELECT status, COUNT(*) FROM <bảng> GROUP BY status"
