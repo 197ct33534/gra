@@ -139,6 +139,26 @@ class WorkshopBoardAndAddendumTest extends TestCase
         $this->assertStringContainsString('Công: Thay má phanh trước/sau', $detail);
     }
 
+    /**
+     * Điện thoại: thanh chọn cột thay cho cuộn ngang 5 cột; mở trang thì hiện ngay cột đầu tiên có xe.
+     */
+    public function test_board_has_a_column_switcher_for_phones_opening_on_the_first_column_with_cars(): void
+    {
+        $this->seed();
+
+        $board = app(WorkshopBoardService::class)->board();
+        $firstWithCars = collect($board)->filter(fn ($orders) => $orders->isNotEmpty())->keys()->first();
+
+        $response = $this->actingAs(User::query()->where('email', 'sa@gara.vn')->firstOrFail())
+            ->get(WorkshopBoard::getUrl())
+            ->assertOk()
+            ->assertSee("col: '{$firstWithCars}'", false);
+
+        foreach (array_keys(WorkshopBoardService::columns()) as $column) {
+            $response->assertSee('data-wb-tab="'.$column.'"', false);
+        }
+    }
+
     public function test_declined_items_cost_nothing_and_reserve_nothing(): void
     {
         $this->seed();

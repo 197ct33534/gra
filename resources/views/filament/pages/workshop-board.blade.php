@@ -5,6 +5,9 @@
         $timezone = (string) config('garage.timezone');
         $viewer = \App\Models\User::current();
         $showMoney = \App\Models\User::currentCanSeeMoney();
+        // Điện thoại chỉ hiện 1 cột: mở trang là thấy ngay cột đầu tiên có xe.
+        $defaultColumn = collect($board)->filter(fn (array $column): bool => $column['orders']->isNotEmpty())->keys()->first()
+            ?? array_key_first($board);
     @endphp
 
     <style>
@@ -38,18 +41,71 @@
         .dark .wb-body { color: #d4d4d8; }
         .dark .wb-foot { border-top-color: #3f3f46; }
         .dark .wb-move { background: #27272a; border-color: #3f3f46; color: #e4e4e7; }
+
+        /* Thanh chọn cột: chỉ dùng trên điện thoại. */
+        .wb-tabs { display: none; gap: 6px; overflow-x: auto; padding: 2px 0 10px; margin-bottom: 4px; scrollbar-width: none; }
+        .wb-tabs::-webkit-scrollbar { display: none; }
+        .wb-tab { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #d1d5db; background: #fff; color: #374151; border-radius: 999px; padding: 8px 12px; font-size: 14px; font-weight: 600; white-space: nowrap; min-height: 40px; }
+        .wb-tab .wb-count { border: 0; background: #f3f4f6; font-weight: 700; }
+        .wb-tab.wb-tab-on { background: #f59e0b; border-color: #f59e0b; color: #111827; }
+        .wb-tab.wb-tab-on .wb-count { background: rgba(255,255,255,.7); color: #111827; }
+        .dark .wb-tab { background: #18181b; border-color: #3f3f46; color: #e4e4e7; }
+        .dark .wb-tab .wb-count { background: rgba(255,255,255,.08); color: #e4e4e7; }
+        .dark .wb-tab.wb-tab-on { background: #f59e0b; border-color: #f59e0b; color: #111827; }
+        .wb-hint-phone { display: none; }
+
+        /* Máy tính bảng: cuộn ngang, mỗi lần vuốt dừng đúng mép một cột. */
+        @media (max-width: 1279px) {
+            .wb-board { scroll-snap-type: x mandatory; }
+            .wb-col { scroll-snap-align: start; }
+        }
+
+        /* Điện thoại: một cột chiếm hết bề ngang, đổi cột bằng thanh chọn; chuyển xe bằng ô 'Chuyển sang…'. */
+        @media (max-width: 767px) {
+            .wb-tabs { display: flex; }
+            .wb-board { display: block; overflow: visible; padding-bottom: 0; }
+            .wb-col { display: none; min-height: 0; padding: 8px; }
+            .wb-col.wb-active { display: flex; }
+            .wb-col-head { display: none; }
+            .wb-card { cursor: default; padding: 12px; }
+            .wb-plate { font-size: 22px; }
+            .wb-body, .wb-foot { font-size: 14px; }
+            .wb-move { font-size: 15px; min-height: 44px; padding: 8px 10px; margin-top: 10px; }
+            .wb-empty { padding: 32px 0; }
+            .wb-hint-desktop { display: none; }
+            .wb-hint-phone { display: block; }
+        }
     </style>
 
-    <div class="wb-hint">Kéo thả thẻ xe sang cột khác (hoặc chọn ở ô "Chuyển sang…" trên máy tính bảng). Bấm đúp hoặc biểu tượng con mắt để xem nhanh lệnh. Bảng tự cập nhật ngay khi có xe đổi trạng thái (dự phòng: làm mới mỗi 30 giây).</div>
+    <div class="wb-hint wb-hint-desktop">Kéo thả thẻ xe sang cột khác (hoặc chọn ở ô "Chuyển sang…" trên máy tính bảng). Bấm đúp hoặc biểu tượng con mắt để xem nhanh lệnh. Bảng tự cập nhật ngay khi có xe đổi trạng thái (dự phòng: làm mới mỗi 30 giây).</div>
+    <div class="wb-hint wb-hint-phone">Chạm tên cột để xem xe trong cột đó. Chuyển xe: chọn ở ô "Chuyển sang…" dưới mỗi thẻ. Chạm biểu tượng con mắt để xem nhanh lệnh.</div>
 
     @include('filament.partials.workshop-realtime')
 
-    <div class="wb-board" wire:poll.30s x-data="{ over: null }">
+    <div wire:poll.30s x-data="{ over: null, col: '{{ $defaultColumn }}' }">
+    <nav class="wb-tabs" role="tablist" aria-label="Chọn cột">
+        @foreach ($board as $key => $column)
+            <button
+                type="button"
+                role="tab"
+                class="wb-tab"
+                data-wb-tab="{{ $key }}"
+                x-bind:class="{ 'wb-tab-on': col === '{{ $key }}' }"
+                x-bind:aria-selected="col === '{{ $key }}'"
+                x-on:click="col = '{{ $key }}'; window.scrollTo({ top: 0, behavior: 'smooth' })"
+            >
+                {{ $column['label'] }}
+                <span class="wb-count">{{ $column['orders']->count() }}</span>
+            </button>
+        @endforeach
+    </nav>
+
+    <div class="wb-board">
         @foreach ($board as $key => $column)
             <section
                 wire:key="col-{{ $key }}"
                 class="wb-col"
-                x-bind:class="{ 'wb-over': over === '{{ $key }}' }"
+                x-bind:class="{ 'wb-over': over === '{{ $key }}', 'wb-active': col === '{{ $key }}' }"
                 x-on:dragover.prevent="over = '{{ $key }}'"
                 x-on:dragleave="if (! $el.contains($event.relatedTarget)) over = null"
                 x-on:drop.prevent="over = null; $wire.moveOrder(parseInt($event.dataTransfer.getData('text/plain')), '{{ $key }}')"
@@ -129,5 +185,6 @@
                 @endforelse
             </section>
         @endforeach
+    </div>
     </div>
 </x-filament-panels::page>
