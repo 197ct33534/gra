@@ -38,6 +38,23 @@ services:
       - gra
     restart: unless-stopped
 
+  reverb:
+    build: .
+    container_name: gra-reverb
+    env_file:
+      - .env
+    volumes:
+      - ./storage:/var/www/html/storage
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache
+    depends_on:
+      - app
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    ports:
+      - "8080:8080"
+    networks:
+      - gra
+    restart: unless-stopped
+
   scheduler:
     build: .
     container_name: gra-scheduler

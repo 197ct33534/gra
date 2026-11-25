@@ -17,12 +17,18 @@ class WorkOrderItemObserver
     public function created(WorkOrderItem $item): void
     {
         $this->logIfBelowCatalog($item);
+        $this->signalBoard($item);
     }
 
     public function updated(WorkOrderItem $item): void
     {
         $order = $this->order($item);
         $name = $item->catalogName();
+
+        // Số hạng mục trên thẻ xe và danh sách 'Việc của tôi' (theo thợ phụ trách) đổi theo hai cột này.
+        if ($item->wasChanged(['technician_id', 'is_approved'])) {
+            $this->signalBoard($item);
+        }
 
         if ($item->wasChanged('unit_price')) {
             ActivityLogger::log(
@@ -53,8 +59,19 @@ class WorkOrderItemObserver
         }
     }
 
+    private function signalBoard(WorkOrderItem $item): void
+    {
+        $order = $this->order($item);
+
+        if ($order instanceof WorkOrder) {
+            WorkOrderObserver::signalBoard($order);
+        }
+    }
+
     public function deleted(WorkOrderItem $item): void
     {
+        $this->signalBoard($item);
+
         ActivityLogger::log(
             ActivityEvent::ItemDeleted,
             $this->order($item),

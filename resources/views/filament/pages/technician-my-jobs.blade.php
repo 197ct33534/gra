@@ -13,6 +13,9 @@
         .mj-bay { display: inline-block; border: 1px solid rgba(127,127,127,.4); border-radius: 6px; padding: 2px 8px; font-size: 12px; }
     </style>
 
+    @include('filament.partials.workshop-realtime')
+    <div wire:poll.60s style="display: none"></div>
+
     @forelse ($jobs as $order)
         @php($late = $order->promised_at && $order->promised_at->isPast())
         <div class="mj-card">

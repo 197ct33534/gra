@@ -13,6 +13,25 @@ docker compose up -d --build
 
 Services: `app`, `queue`, `scheduler`, `mysql`, `redis`.
 
+## Realtime Bảng điều phối xe (Laravel Reverb)
+
+Khi một lệnh đổi trạng thái / cầu nâng / giờ hẹn / thợ phụ trách, mọi màn **Bảng điều phối xe** và
+**Việc của tôi** đang mở tự cập nhật trong ~1–2 giây (tín hiệu `board.changed` trên kênh riêng
+`workshop`, chỉ mang mã lệnh, không mang tiền).
+
+```bash
+# .env: BROADCAST_CONNECTION=reverb + REVERB_APP_ID/KEY/SECRET (sinh bằng `php artisan reverb:install`)
+php artisan reverb:start            # local; Docker: service `reverb` (cổng 8080)
+```
+
+- Không chạy Reverb hoặc `BROADCAST_CONNECTION=log`: thao tác vẫn bình thường, các màn tự làm mới
+  theo chu kỳ (Bảng 30 giây, Việc của tôi 60 giây). Reverb tắt giữa chừng chỉ làm mỗi lần lưu chậm tối
+  đa ~0,5 giây (`REVERB_CONNECT_TIMEOUT`).
+- Cổng 8080 bận (VD máy có MiniTool ShadowMaker): đặt `REVERB_PORT` và `REVERB_SERVER_PORT` cùng giá trị khác, VD 8081.
+- Trình duyệt phải tới được `REVERB_HOST:REVERB_PORT`. Qua tunnel ngrok chỉ mở cổng web nên realtime không
+  chạy, các màn quay về tự làm mới theo chu kỳ.
+- STG/production sau HTTPS: đặt `REVERB_SCHEME=https`, `REVERB_HOST` = tên miền proxy tới cổng Reverb.
+
 ## CI
 
 GitHub Actions (`.github/workflows/ci.yml`) chạy trên push/PR vào `main` và `staging`:

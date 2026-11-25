@@ -40,7 +40,9 @@
         .dark .wb-move { background: #27272a; border-color: #3f3f46; color: #e4e4e7; }
     </style>
 
-    <div class="wb-hint">Kéo thả thẻ xe sang cột khác (hoặc chọn ở ô "Chuyển sang…" trên máy tính bảng). Bấm đúp hoặc biểu tượng con mắt để xem nhanh lệnh. Bảng tự làm mới mỗi 30 giây.</div>
+    <div class="wb-hint">Kéo thả thẻ xe sang cột khác (hoặc chọn ở ô "Chuyển sang…" trên máy tính bảng). Bấm đúp hoặc biểu tượng con mắt để xem nhanh lệnh. Bảng tự cập nhật ngay khi có xe đổi trạng thái (dự phòng: làm mới mỗi 30 giây).</div>
+
+    @include('filament.partials.workshop-realtime')
 
     <div class="wb-board" wire:poll.30s x-data="{ over: null }">
         @foreach ($board as $key => $column)
