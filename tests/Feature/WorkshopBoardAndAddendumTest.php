@@ -159,6 +159,23 @@ class WorkshopBoardAndAddendumTest extends TestCase
         }
     }
 
+    /**
+     * Điện thoại: danh sách Lệnh sửa chữa gọn (cột phụ ẩn, khách + giờ hẹn ghi dưới biển số, nút dòng gom vào '⋯ Thao tác').
+     */
+    public function test_work_order_list_has_a_compact_phone_layout(): void
+    {
+        $this->seed();
+
+        $this->actingAs(User::query()->where('email', 'sa@gara.vn')->firstOrFail())
+            ->get('/admin/work-orders')
+            ->assertOk()
+            ->assertSee('wo-phone-only', false)
+            ->assertSee('wo-act-inline', false)
+            ->assertSee('wo-act-more', false)
+            ->assertSee('Thao tác')
+            ->assertSee('@media (max-width: 767px)', false);
+    }
+
     public function test_declined_items_cost_nothing_and_reserve_nothing(): void
     {
         $this->seed();

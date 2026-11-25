@@ -135,7 +135,7 @@ Vì sao quan trọng: dòng này sẽ được nhắc lại cho khách ở lần
 "2. Báo giá (Lệnh sửa chữa)","2.7 Lấy link để khách tự xem và duyệt báo giá","Tài khoản: sa1@gara.vn
 Các bước:
 1. Menu 'Tiếp nhận' → 'Lệnh sửa chữa' (danh sách). Nút này KHÔNG có trong trang Sửa lệnh, chỉ có ở từng dòng của danh sách.
-2. Ở dòng có mã RO của case 1.1, bấm nút 'Link duyệt BG (KH)'.
+2. Ở dòng có mã RO của case 1.1, bấm nút 'Link duyệt BG (KH)'. Trên điện thoại (màn hẹp) các nút trên dòng được gom vào nút ⋮ 'Thao tác' ở cuối dòng: bấm ⋮ rồi chọn 'Link duyệt BG (KH)'.
 Kết quả mong đợi:
 - Thông báo xanh 'Link duyệt báo giá cho khách', nội dung là 1 đường link.
 - Cột 'Trạng thái' của dòng đó đổi thành 'Đã báo giá'. Nút 'Link duyệt BG (KH)' vẫn còn.","1","/admin/work-orders"

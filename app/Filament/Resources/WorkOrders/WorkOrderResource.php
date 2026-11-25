@@ -31,6 +31,7 @@ use BackedEnum;
 use Closure;
 use DomainException;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -595,6 +596,7 @@ class WorkOrderResource extends Resource
                     ->badge()
                     ->color('gray')
                     ->copyable()
+                    ->visibleFrom('md')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('vehicle.license_plate')
@@ -605,25 +607,32 @@ class WorkOrderResource extends Resource
                     ->searchable(query: fn (Builder $query, string $search): Builder => $query->whereHas(
                         'vehicle',
                         fn (Builder $query): Builder => LicensePlateHelper::applyVehicleSearch($query, $search),
-                    )),
+                    ))
+                    // Điện thoại: cột Khách hàng / Hẹn giao bị ẩn nên ghi gọn dưới biển số (CSS ẩn dòng này từ 768px).
+                    ->description(fn (WorkOrder $record): Htmlable => self::phoneSummary($record)),
                 TextColumn::make('vehicle.customer.name')
                     ->label('Khách hàng')
+                    ->visibleFrom('md')
                     ->searchable(),
                 TextColumn::make('reception_odo')
                     ->label('ODO tiếp nhận')
                     ->numeric(decimalPlaces: 0, locale: 'vi')
                     ->suffix(' km')
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('lift_bay')
                     ->label('Cầu nâng')
+                    ->visibleFrom('md')
                     ->placeholder('—'),
                 TextColumn::make('promised_at')
                     ->label('Hẹn giao')
                     ->dateTime('H:i d/m')
                     ->placeholder('—')
                     ->color(fn (WorkOrder $record): string => $record->promised_at?->isPast() && $record->status !== WorkOrderStatus::Delivered ? 'danger' : 'gray')
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('order_type')
+                    ->visibleFrom('md')
                     ->label('Loại lệnh')
                     ->badge()
                     ->formatStateUsing(fn (WorkOrderType $state): string => $state->getLabel())
@@ -633,6 +642,7 @@ class WorkOrderResource extends Resource
                 TextColumn::make('final_amount')
                     ->label('Thanh toán')
                     ->visible(fn (): bool => User::currentCanSeeMoney())
+                    ->visibleFrom('md')
                     ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
                     ->sortable(),
                 TextColumn::make('status')
@@ -642,6 +652,7 @@ class WorkOrderResource extends Resource
                     ->color(fn (WorkOrderStatus $state): string => $state->getColor()),
                 IconColumn::make('needs_restock')
                     ->label('Thiếu hàng')
+                    ->visibleFrom('md')
                     ->boolean()
                     ->trueIcon(Heroicon::OutlinedExclamationTriangle)
                     ->trueColor('danger')
@@ -680,20 +691,45 @@ class WorkOrderResource extends Resource
                     }),
             ])
             ->recordActions([
-                self::printJobCardAction(),
-                self::printQuotationAction(),
-                self::copyQuoteLinkAction(),
-                self::copyStatusLinkAction(),
-                self::copyFeedbackLinkAction(),
-                self::createInvoiceAction(),
-                self::printInvoiceAction(),
-                self::printInsuranceInvoiceAction(),
-                self::approveQuoteAction(),
-                self::approveAddendumAction(),
-                self::cancelApprovalAction(),
-                self::completeDeliveryAction(),
-                ViewAction::make(),
-                EditAction::make(),
+                ...self::rowActionsFor([
+                    self::printJobCardAction(),
+                    self::printQuotationAction(),
+                    self::copyQuoteLinkAction(),
+                    self::copyStatusLinkAction(),
+                    self::copyFeedbackLinkAction(),
+                    self::createInvoiceAction(),
+                    self::printInvoiceAction(),
+                    self::printInsuranceInvoiceAction(),
+                    self::approveQuoteAction(),
+                    self::approveAddendumAction(),
+                    self::cancelApprovalAction(),
+                    self::completeDeliveryAction(),
+                    ViewAction::make(),
+                ], 'wo-act-inline'),
+                // Điện thoại: cùng các thao tác trên, gom vào một nút (CSS ẩn nhóm này từ 768px, ẩn nút rời dưới 768px).
+                ActionGroup::make(self::rowActionsFor([
+                    self::printJobCardAction(),
+                    self::printQuotationAction(),
+                    self::copyQuoteLinkAction(),
+                    self::copyStatusLinkAction(),
+                    self::copyFeedbackLinkAction(),
+                    self::createInvoiceAction(),
+                    self::printInvoiceAction(),
+                    self::printInsuranceInvoiceAction(),
+                    self::approveQuoteAction(),
+                    self::approveAddendumAction(),
+                    self::cancelApprovalAction(),
+                    self::completeDeliveryAction(),
+                    ViewAction::make(),
+                    EditAction::make(),
+                ], suffix: 'Phone'))
+                    ->label('Thao tác')
+                    ->tooltip('Thao tác')
+                    ->icon(Heroicon::EllipsisVertical)
+                    ->iconButton()
+                    ->color('gray')
+                    ->extraAttributes(['class' => 'wo-act-more']),
+                ...self::rowActionsFor([EditAction::make()], 'wo-act-inline'),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
@@ -701,6 +737,49 @@ class WorkOrderResource extends Resource
                 ]),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    /**
+     * Nút trên dòng danh sách: bản rời (máy tính, class 'wo-act-inline') hoặc bản trong nhóm '⋯ Thao tác'
+     * (điện thoại). Hai bản là hai action khác tên nên dùng chung được trong một bảng.
+     *
+     * @param  list<Action>  $actions
+     * @return list<Action>
+     */
+    public static function rowActionsFor(array $actions, ?string $class = null, string $suffix = ''): array
+    {
+        return array_map(function (Action $action) use ($class, $suffix): Action {
+            if ($suffix !== '') {
+                $action->name($action->getName().$suffix);
+            }
+
+            if ($class !== null) {
+                $action->extraAttributes(['class' => $class], merge: true);
+            }
+
+            return $action;
+        }, $actions);
+    }
+
+    /**
+     * Dòng phụ dưới biển số, chỉ hiện trên điện thoại (thay các cột bị ẩn):
+     * mã lệnh · tên khách · giờ hẹn (đỏ nếu trễ) · tổng tiền (chỉ người được xem tiền).
+     */
+    public static function phoneSummary(WorkOrder $record): Htmlable
+    {
+        $parts = [e($record->code), e($record->vehicle?->customer?->name ?? '—')];
+
+        if (User::currentCanSeeMoney()) {
+            $parts[] = '<b>'.e(VietnameseMoney::format($record->final_amount)).'</b>';
+        }
+
+        if ($record->promised_at !== null) {
+            $late = $record->promised_at->isPast() && $record->status !== WorkOrderStatus::Delivered;
+            $time = e($record->promised_at->timezone((string) config('garage.timezone'))->format('H:i d/m'));
+            $parts[] = $late ? '<span style="color:#dc2626;font-weight:600">Trễ hẹn '.$time.'</span>' : 'Hẹn '.$time;
+        }
+
+        return new HtmlString('<span class="wo-phone-only">'.implode(' · ', $parts).'</span>');
     }
 
     public static function printJobCardAction(): Action
