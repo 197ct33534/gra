@@ -8,6 +8,7 @@ use App\Filament\Resources\Appointments\Pages\EditAppointment;
 use App\Filament\Resources\Appointments\Pages\ListAppointments;
 use App\Filament\Resources\Appointments\Pages\ViewAppointment;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
+use App\Filament\Support\PhoneTable;
 use App\Helpers\LicensePlateHelper;
 use App\Models\Appointment;
 use App\Models\User;
@@ -30,6 +31,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
@@ -132,11 +134,13 @@ class AppointmentResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('code')->label('Mã')->searchable()->sortable(),
-                TextColumn::make('scheduled_start')->label('Giờ hẹn')->dateTime('d/m H:i')->sortable(),
+                TextColumn::make('code')->label('Mã')->visibleFrom('md')->searchable()->sortable(),
+                TextColumn::make('scheduled_start')->label('Giờ hẹn')->dateTime('d/m H:i')->visibleFrom('md')->sortable(),
                 TextColumn::make('plate')
                     ->label('Biển số')
                     ->state(fn (Appointment $r): string => $r->displayPlate() ?? '—')
+                    // Điện thoại: các cột giờ hẹn / khách / mã / cầu / RO bị ẩn nên ghi gọn dưới biển số.
+                    ->description(fn (Appointment $r): Htmlable => self::phoneSummary($r))
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         // Như các ô tìm xe khác: "51k12345", "51K-123.45" đều ra cùng một xe.
                         $plate = LicensePlateHelper::clean($search);
@@ -151,10 +155,11 @@ class AppointmentResource extends Resource
                     }),
                 TextColumn::make('guest')
                     ->label('Khách')
-                    ->state(fn (Appointment $r): string => $r->displayName()),
-                TextColumn::make('lift_bay')->label('Cầu')->placeholder('—'),
+                    ->state(fn (Appointment $r): string => $r->displayName())
+                    ->visibleFrom('md'),
+                TextColumn::make('lift_bay')->label('Cầu')->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('status')->label('TT')->badge(),
-                TextColumn::make('workOrder.code')->label('RO')->placeholder('—'),
+                TextColumn::make('workOrder.code')->label('RO')->placeholder('—')->visibleFrom('md'),
             ])
             ->filters([
                 SelectFilter::make('status')->label('Trạng thái')->options(AppointmentStatus::class),
@@ -168,12 +173,27 @@ class AppointmentResource extends Resource
                         return $query->whereBetween('scheduled_start', [$start, $end]);
                     }),
             ])
-            ->recordActions([
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
                 ViewAction::make(),
                 EditAction::make()
                     ->visible(fn (Appointment $record): bool => $record->status === AppointmentStatus::Scheduled),
-            ])
+            ]))
             ->defaultSort('scheduled_start');
+    }
+
+    /**
+     * Dòng phụ dưới biển số, chỉ hiện trên điện thoại: giờ hẹn · khách · mã hẹn · cầu · lệnh RO.
+     */
+    public static function phoneSummary(Appointment $record): Htmlable
+    {
+        return PhoneTable::summary([
+            $record->scheduled_start?->timezone((string) config('garage.timezone'))->format('d/m H:i'),
+            $record->displayName(),
+            $record->code,
+            filled($record->lift_bay) ? 'Cầu '.$record->lift_bay : null,
+            $record->workOrder?->code !== null ? 'RO '.$record->workOrder->code : null,
+        ]);
     }
 
     public static function getEloquentQuery(): Builder

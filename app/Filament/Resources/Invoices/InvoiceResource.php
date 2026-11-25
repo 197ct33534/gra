@@ -9,6 +9,7 @@ use App\Enums\PaymentStatus;
 use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\Invoices\Pages\ListInvoices;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
+use App\Filament\Support\PhoneTable;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Services\CreditNoteService;
@@ -32,8 +33,10 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class InvoiceResource extends Resource
@@ -86,7 +89,9 @@ class InvoiceResource extends Resource
                     ->badge()
                     ->color('gray')
                     ->copyable()
-                    ->searchable(),
+                    ->searchable()
+                    // Điện thoại: các cột lệnh / bên trả / tiền / ngày bị ẩn nên ghi gọn dưới số hóa đơn.
+                    ->description(fn (Invoice $record): Htmlable => self::phoneSummary($record)),
                 TextColumn::make('workOrder.code')
                     ->label('Lệnh sửa chữa')
                     ->description(fn (Invoice $record): string => $record->workOrder?->vehicle?->license_plate ?? '')
@@ -94,25 +99,30 @@ class InvoiceResource extends Resource
                         ? WorkOrderResource::getUrl('view', ['record' => $record->workOrder])
                         : null)
                     ->color('primary')
+                    ->visibleFrom('md')
                     ->searchable(),
                 TextColumn::make('payer_type')
                     ->label('Bên trả')
                     ->badge()
                     ->formatStateUsing(fn (InvoicePayer $state): string => $state->getLabel())
-                    ->color(fn (InvoicePayer $state): string => $state->getColor()),
+                    ->color(fn (InvoicePayer $state): string => $state->getColor())
+                    ->visibleFrom('md'),
                 TextColumn::make('payer_display')
                     ->label('Đơn vị / khách hàng')
                     ->state(fn (Invoice $record): string => self::payerDisplay($record))
+                    ->visibleFrom('md')
                     ->wrap(),
                 TextColumn::make('total_amount')
                     ->label('Phải thu')
                     ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
                     ->alignEnd()
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('paid_amount')
                     ->label('Đã thu')
                     ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
-                    ->alignEnd(),
+                    ->alignEnd()
+                    ->visibleFrom('md'),
                 TextColumn::make('outstanding')
                     ->label('Còn nợ')
                     ->state(fn (Invoice $record): string => VietnameseMoney::format($record->outstandingAmount()))
@@ -126,13 +136,13 @@ class InvoiceResource extends Resource
                         PaymentStatus::Paid => 'success',
                         PaymentStatus::PartiallyPaid => 'warning',
                         PaymentStatus::Unpaid => 'danger',
-                    }),
+                    })
+                    ->visibleFrom('md'),
                 TextColumn::make('created_at')
                     ->label('Ngày lập')
                     ->dateTime('d/m/Y')
-                    ->description(fn (Invoice $record): ?string => $record->outstandingAmount() > 0 && $record->created_at !== null
-                        ? 'Nợ '.(int) $record->created_at->startOfDay()->diffInDays(now()->startOfDay()).' ngày'
-                        : null)
+                    ->description(fn (Invoice $record): ?string => self::debtAgeLabel($record))
+                    ->visibleFrom('md')
                     ->sortable(),
             ])
             ->filters([
@@ -167,7 +177,8 @@ class InvoiceResource extends Resource
                             ->when($data['until'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate('created_at', '<=', $date));
                     }),
             ])
-            ->recordActions([
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
                 self::recordPaymentAction(),
                 self::applyWalletAction(),
                 self::redeemLoyaltyAction(),
@@ -187,8 +198,48 @@ class InvoiceResource extends Resource
                     ->url(fn (Invoice $record): ?string => $record->einvoice_lookup_url)
                     ->openUrlInNewTab()
                     ->visible(fn (Invoice $record): bool => filled($record->einvoice_lookup_url)),
-            ])
+            ]))
             ->defaultSort('created_at', 'desc');
+    }
+
+    /**
+     * Dòng phụ dưới số hóa đơn, chỉ hiện trên điện thoại (thay các cột bị ẩn):
+     * lệnh sửa chữa (bấm được) + biển số · bên trả: đơn vị / khách · phải thu · đã thu · trạng thái · ngày lập (số ngày nợ).
+     */
+    public static function phoneSummary(Invoice $record): Htmlable
+    {
+        $workOrder = null;
+
+        if ($record->workOrder !== null) {
+            $url = WorkOrderResource::getUrl('view', ['record' => $record->workOrder]);
+            $plate = $record->workOrder->vehicle?->license_plate;
+            $workOrder = new HtmlString(
+                '<a href="'.e($url).'" style="color:#2563eb;text-decoration:underline">'.e($record->workOrder->code).'</a>'
+                .($plate !== null ? ' '.e($plate) : ''),
+            );
+        }
+
+        $age = self::debtAgeLabel($record);
+        $date = $record->created_at?->timezone((string) config('garage.timezone'))->format('d/m/Y');
+
+        return PhoneTable::summary([
+            $workOrder,
+            $record->payer_type?->getLabel().': '.self::payerDisplay($record),
+            'Phải thu '.VietnameseMoney::format($record->total_amount),
+            'Đã thu '.VietnameseMoney::format($record->paid_amount),
+            $record->payment_status?->getLabel(),
+            $age !== null
+                ? new HtmlString(e($date).' <span style="color:#dc2626;font-weight:600">'.e($age).'</span>')
+                : $date,
+        ]);
+    }
+
+    /** 'Nợ N ngày' tính từ ngày lập khi hóa đơn còn công nợ. */
+    public static function debtAgeLabel(Invoice $record): ?string
+    {
+        return $record->outstandingAmount() > 0 && $record->created_at !== null
+            ? 'Nợ '.(int) $record->created_at->startOfDay()->diffInDays(now()->startOfDay()).' ngày'
+            : null;
     }
 
     public static function issueEInvoiceAction(): Action

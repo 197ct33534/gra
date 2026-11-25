@@ -29,17 +29,18 @@
 
     <x-filament::section icon="heroicon-o-banknotes">
         <x-slot name="heading">Lương khoán thợ — tổng {{ \App\Filament\Pages\TechnicianPayroll::money($report['total']) }}</x-slot>
+        {{-- Điện thoại (< 768px): chỉ giữ Thợ · Tiền khoán; cột khác có class hide-phone. --}}
         <div class="pr-wrap">
             <table class="pr-table">
                 <thead>
                     <tr>
                         <th>Thợ</th>
-                        <th class="num">Hạng mục</th>
-                        <th class="num">Số xe</th>
-                        <th class="num">Tiền công làm ra</th>
-                        <th class="num">Giờ chuẩn</th>
-                        <th class="num">Giờ thực tế</th>
-                        <th class="num">Làm lại (BH)</th>
+                        <th class="num hide-phone">Hạng mục</th>
+                        <th class="num hide-phone">Số xe</th>
+                        <th class="num hide-phone">Tiền công làm ra</th>
+                        <th class="num hide-phone">Giờ chuẩn</th>
+                        <th class="num hide-phone">Giờ thực tế</th>
+                        <th class="num hide-phone">Làm lại (BH)</th>
                         <th class="num">Tiền khoán</th>
                     </tr>
                 </thead>
@@ -55,10 +56,10 @@
                                         <table class="pr-table">
                                             @foreach ($report['details'][$row['technician']->id] as $line)
                                                 <tr>
-                                                    <td>{{ $line['date'] }}</td>
+                                                    <td class="hide-phone">{{ $line['date'] }}</td>
                                                     <td>{{ $line['code'] }}<div class="pr-muted">{{ $line['plate'] }}</div></td>
                                                     <td>{{ $line['job'] }}</td>
-                                                    <td class="num">{{ $line['labor'] }}</td>
+                                                    <td class="num hide-phone">{{ $line['labor'] }}</td>
                                                     <td class="num">{{ $line['payout'] }} <span class="pr-muted">{{ $line['estimated'] }}</span></td>
                                                 </tr>
                                             @endforeach
@@ -66,12 +67,12 @@
                                     </details>
                                 @endif
                             </td>
-                            <td class="num">{{ $row['jobs'] }}</td>
-                            <td class="num">{{ $row['cars'] }}</td>
-                            <td class="num">{{ \App\Filament\Pages\TechnicianPayroll::money($row['labor']) }}</td>
-                            <td class="num">{{ number_format($row['minutes'] / 60, 1, ',', '.') }} giờ</td>
-                            <td class="num">{{ number_format(($row['actual_minutes'] ?? 0) / 60, 1, ',', '.') }} giờ</td>
-                            <td class="num" style="{{ $row['redo'] > 0 ? 'color:#dc2626;font-weight:700' : '' }}">{{ $row['redo'] }}</td>
+                            <td class="num hide-phone">{{ $row['jobs'] }}</td>
+                            <td class="num hide-phone">{{ $row['cars'] }}</td>
+                            <td class="num hide-phone">{{ \App\Filament\Pages\TechnicianPayroll::money($row['labor']) }}</td>
+                            <td class="num hide-phone">{{ number_format($row['minutes'] / 60, 1, ',', '.') }} giờ</td>
+                            <td class="num hide-phone">{{ number_format(($row['actual_minutes'] ?? 0) / 60, 1, ',', '.') }} giờ</td>
+                            <td class="num hide-phone" style="{{ $row['redo'] > 0 ? 'color:#dc2626;font-weight:700' : '' }}">{{ $row['redo'] }}</td>
                             <td class="num pr-payout">{{ \App\Filament\Pages\TechnicianPayroll::money($row['payout']) }}</td>
                         </tr>
                     @empty
@@ -84,6 +85,7 @@
 
     <x-filament::section icon="heroicon-o-wrench-screwdriver">
         <x-slot name="heading">Năng suất cầu nâng</x-slot>
+        {{-- Điện thoại: chỉ giữ Cầu · Xe đã giao · Tiền công. --}}
         <div class="pr-wrap">
             <table class="pr-table">
                 <thead>
@@ -91,8 +93,8 @@
                         <th>Cầu</th>
                         <th class="num">Xe đã giao</th>
                         <th class="num">Tiền công</th>
-                        <th class="num">Tiền phụ tùng</th>
-                        <th class="num">Xe nằm xưởng TB</th>
+                        <th class="num hide-phone">Tiền phụ tùng</th>
+                        <th class="num hide-phone">Xe nằm xưởng TB</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -101,8 +103,8 @@
                             <td style="font-weight: 600;">{{ $row['lift'] }}</td>
                             <td class="num">{{ $row['cars'] }}</td>
                             <td class="num">{{ \App\Filament\Pages\TechnicianPayroll::money($row['labor']) }}</td>
-                            <td class="num">{{ \App\Filament\Pages\TechnicianPayroll::money($row['parts']) }}</td>
-                            <td class="num">{{ number_format($row['avg_hours'], 1, ',', '.') }} giờ</td>
+                            <td class="num hide-phone">{{ \App\Filament\Pages\TechnicianPayroll::money($row['parts']) }}</td>
+                            <td class="num hide-phone">{{ number_format($row['avg_hours'], 1, ',', '.') }} giờ</td>
                         </tr>
                     @empty
                         <tr><td colspan="5" class="pr-muted">Chưa có xe bàn giao trong tháng.</td></tr>

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PartCategories;
 use App\Filament\Resources\PartCategories\Pages\CreatePartCategory;
 use App\Filament\Resources\PartCategories\Pages\EditPartCategory;
 use App\Filament\Resources\PartCategories\Pages\ListPartCategories;
+use App\Filament\Support\PhoneTable;
 use App\Models\PartCategory;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -17,6 +18,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 class PartCategoryResource extends Resource
@@ -57,8 +59,15 @@ class PartCategoryResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label('Tên')->searchable()->sortable(),
-                TextColumn::make('parent.name')->label('Nhóm cha')->placeholder('—'),
+                TextColumn::make('name')
+                    ->label('Tên')
+                    ->searchable()
+                    ->sortable()
+                    // Điện thoại: cột Nhóm cha bị ẩn nên ghi gọn dưới tên.
+                    ->description(fn (PartCategory $record): Htmlable => PhoneTable::summary([
+                        $record->parent?->name !== null ? 'Thuộc '.$record->parent->name : null,
+                    ])),
+                TextColumn::make('parent.name')->label('Nhóm cha')->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('parts_count')->label('Số mã')->counts('parts'),
             ])
             ->recordActions([EditAction::make()])

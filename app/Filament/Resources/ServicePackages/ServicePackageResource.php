@@ -7,6 +7,7 @@ use App\Filament\Resources\ServicePackages\Pages\CreateServicePackage;
 use App\Filament\Resources\ServicePackages\Pages\EditServicePackage;
 use App\Filament\Resources\ServicePackages\Pages\ListServicePackages;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
+use App\Filament\Support\PhoneTable;
 use App\Models\ServicePackage;
 use App\Models\User;
 use App\Support\VietnameseMoney;
@@ -24,7 +25,9 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class ServicePackageResource extends Resource
@@ -113,19 +116,29 @@ class ServicePackageResource extends Resource
                     ->label('Mã gói')
                     ->badge()
                     ->color('gray')
+                    ->visibleFrom('md')
                     ->searchable(),
                 TextColumn::make('name')
                     ->label('Tên gói')
-                    ->description(fn (ServicePackage $record): ?string => $record->vehicle_hint)
+                    // Dòng xe phù hợp (mọi màn hình) + trên điện thoại: mã gói / số hạng mục / ngưng dùng.
+                    ->description(fn (ServicePackage $record): Htmlable => new HtmlString(
+                        e($record->vehicle_hint).PhoneTable::summary([
+                            $record->code,
+                            $record->items_count.' hạng mục',
+                            $record->is_active ? null : 'Ngưng dùng',
+                        ])->toHtml(),
+                    ))
                     ->searchable(),
                 TextColumn::make('items_count')
                     ->label('Số hạng mục')
+                    ->visibleFrom('md')
                     ->counts('items'),
                 TextColumn::make('catalog_total')
                     ->label('Giá theo bảng giá')
                     ->state(fn (ServicePackage $record): string => VietnameseMoney::format($record->catalogTotal())),
                 ToggleColumn::make('is_active')
                     ->label('Đang dùng')
+                    ->visibleFrom('md')
                     ->disabled(fn (): bool => ! (User::current()?->isAdmin() ?? false)),
             ])
             ->recordActions([

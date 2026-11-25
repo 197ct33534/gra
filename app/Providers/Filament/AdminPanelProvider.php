@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Resources\WorkOrders\Pages\ListWorkOrders;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -45,11 +44,8 @@ class AdminPanelProvider extends PanelProvider
             // Robot "Cờ Lê" dẫn đường lần đầu đăng nhập + nút Trợ giúp trên thanh trên cùng để chạy lại.
             ->renderHook(PanelsRenderHook::USER_MENU_BEFORE, fn (): View => view('filament.onboarding-tour.help-button'))
             ->renderHook(PanelsRenderHook::BODY_END, fn (): View => view('filament.onboarding-tour.tour'))
-            ->renderHook(
-                PanelsRenderHook::STYLES_AFTER,
-                fn (): View => view('filament.work-orders.list-phone-styles'),
-                scopes: ListWorkOrders::class,
-            )
+            // Bảng danh sách gọn trên điện thoại (App\Filament\Support\PhoneTable).
+            ->renderHook(PanelsRenderHook::STYLES_AFTER, fn (): View => view('filament.phone-table-styles'))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

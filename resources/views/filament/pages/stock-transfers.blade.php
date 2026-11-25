@@ -41,7 +41,7 @@
                 <div style="font-weight:600">Dòng phụ tùng</div>
                 @foreach ($lines as $index => $line)
                     <div class="st-row">
-                        <x-filament::input.wrapper style="min-width:320px;flex:1">
+                        <x-filament::input.wrapper style="min-width:min(320px,100%);flex:1">
                             <x-filament::input.select wire:model="lines.{{ $index }}.part_id">
                                 <option value="">— PT —</option>
                                 @foreach ($this->partOptions() as $id => $label)
@@ -82,18 +82,22 @@
                 <tr>
                     <th>Mã</th>
                     <th>Từ → Đến</th>
-                    <th>Dòng</th>
-                    <th>TT</th>
+                    <th class="hide-phone">Dòng</th>
+                    <th class="hide-phone">TT</th>
                     <th></th>
                 </tr>
                 </thead>
                 <tbody>
                 @forelse ($transfers as $transfer)
                     <tr>
-                        <td>{{ $transfer->code }}</td>
+                        <td>
+                            {{ $transfer->code }}
+                            {{-- Điện thoại: số dòng / trạng thái bị ẩn nên ghi gọn dưới mã. --}}
+                            <span class="phone-only" style="opacity:.7">{{ $transfer->items->count() }} dòng · {{ \App\Filament\Pages\StockTransfers::statusLabel($transfer->status) }}</span>
+                        </td>
                         <td>{{ $transfer->fromBranch?->code }} → {{ $transfer->toBranch?->code }}</td>
-                        <td>{{ $transfer->items->count() }}</td>
-                        <td>{{ \App\Filament\Pages\StockTransfers::statusLabel($transfer->status) }}</td>
+                        <td class="hide-phone">{{ $transfer->items->count() }}</td>
+                        <td class="hide-phone">{{ \App\Filament\Pages\StockTransfers::statusLabel($transfer->status) }}</td>
                         <td>
                             @if ($transfer->status === \App\Enums\StockTransferStatus::Draft)
                                 <x-filament::button size="sm" color="success"

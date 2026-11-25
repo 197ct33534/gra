@@ -29,7 +29,8 @@
             <table class="fr-table">
                 <thead>
                 <tr>
-                    <th>Hóa đơn</th>
+                    {{-- Điện thoại (< 768px): ẩn số hóa đơn, giữ Khách / xe · Tuổi nợ · Còn phải thu. --}}
+                    <th class="hide-phone">Hóa đơn</th>
                     <th>Khách / xe</th>
                     <th class="num">Tuổi nợ</th>
                     <th class="num">Còn phải thu</th>
@@ -38,7 +39,7 @@
                 <tbody>
                 @forelse ($aging['rows'] as $row)
                     <tr>
-                        <td>{{ $row['invoice']->invoice_number }}</td>
+                        <td class="hide-phone">{{ $row['invoice']->invoice_number }}</td>
                         <td>
                             {{ $row['invoice']->payer_name ?: ($row['invoice']->workOrder?->vehicle?->customer?->name ?? '—') }}
                             <div style="opacity:.65;font-size:12px">{{ $row['invoice']->workOrder?->vehicle?->license_plate }}</div>
@@ -68,7 +69,8 @@
             <table class="fr-table">
                 <thead>
                 <tr>
-                    <th>Phiếu nợ</th>
+                    {{-- Điện thoại: ẩn số phiếu, giữ NCC · Tuổi nợ · Còn phải trả. --}}
+                    <th class="hide-phone">Phiếu nợ</th>
                     <th>NCC</th>
                     <th class="num">Tuổi nợ</th>
                     <th class="num">Còn phải trả</th>
@@ -77,7 +79,7 @@
                 <tbody>
                 @forelse ($ap['rows'] as $row)
                     <tr>
-                        <td>{{ $row['bill']->bill_number ?? ('#'.$row['bill']->id) }}</td>
+                        <td class="hide-phone">{{ $row['bill']->bill_number ?? ('#'.$row['bill']->id) }}</td>
                         <td>{{ $row['bill']->supplier?->name ?? '—' }}</td>
                         <td class="num">{{ $row['days'] }} ngày</td>
                         <td class="num">{{ \App\Filament\Pages\FinancialReports::money($row['outstanding']) }}</td>

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\BankTransactions;
 use App\Enums\BankTransactionStatus;
 use App\Enums\InvoicePayer;
 use App\Filament\Resources\BankTransactions\Pages\ListBankTransactions;
+use App\Filament\Support\PhoneTable;
 use App\Models\BankTransaction;
 use App\Models\Invoice;
 use App\Services\BankReconciliationService;
@@ -20,6 +21,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
@@ -74,14 +76,18 @@ class BankTransactionResource extends Resource
                 TextColumn::make('transacted_at')
                     ->label('Thời gian')
                     ->dateTime('H:i d/m/Y')
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('amount')
                     ->label('Số tiền')
                     ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
-                    ->weight('bold'),
+                    ->weight('bold')
+                    // Điện thoại: thời gian / nội dung / hóa đơn / ghi chú bị ẩn nên ghi gọn dưới số tiền.
+                    ->description(fn (BankTransaction $record): Htmlable => self::phoneSummary($record)),
                 TextColumn::make('content')
                     ->label('Nội dung chuyển khoản')
-                    ->description(fn (BankTransaction $record): string => trim(($record->bank ?? '').' '.($record->reference_code ?? '')))
+                    ->description(fn (BankTransaction $record): string => self::bankReference($record))
+                    ->visibleFrom('md')
                     ->wrap()
                     ->searchable(),
                 TextColumn::make('status')
@@ -90,10 +96,12 @@ class BankTransactionResource extends Resource
                 TextColumn::make('invoice.invoice_number')
                     ->label('Hóa đơn')
                     ->placeholder('—')
-                    ->description(fn (BankTransaction $record): ?string => $record->status === BankTransactionStatus::Matched ? 'Ghi nhận '.VietnameseMoney::format($record->matched_amount) : null),
+                    ->description(fn (BankTransaction $record): ?string => self::matchedLabel($record))
+                    ->visibleFrom('md'),
                 TextColumn::make('note')
                     ->label('Ghi chú')
                     ->wrap()
+                    ->visibleFrom('md')
                     ->placeholder('—'),
             ])
             ->filters([
@@ -101,7 +109,8 @@ class BankTransactionResource extends Resource
                     ->label('Đối soát')
                     ->options(BankTransactionStatus::class),
             ])
-            ->recordActions([
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
                 Action::make('match')
                     ->label('Gán vào hóa đơn')
                     ->icon(Heroicon::OutlinedLink)
@@ -142,8 +151,37 @@ class BankTransactionResource extends Resource
                             ->placeholder('VD: Tiền nhà cung cấp hoàn lại'),
                     ])
                     ->action(fn (BankTransaction $record, array $data): mixed => app(BankReconciliationService::class)->ignore($record, $data['reason'] ?? null)),
-            ])
+            ]))
             ->defaultSort('transacted_at', 'desc');
+    }
+
+    /**
+     * Dòng phụ dưới số tiền, chỉ hiện trên điện thoại (thay các cột bị ẩn):
+     * thời gian · nội dung CK · ngân hàng + mã tham chiếu · hóa đơn (số đã ghi nhận) · ghi chú.
+     */
+    public static function phoneSummary(BankTransaction $record): Htmlable
+    {
+        $matched = self::matchedLabel($record);
+
+        return PhoneTable::summary([
+            $record->transacted_at?->timezone((string) config('garage.timezone'))->format('H:i d/m/Y'),
+            $record->content,
+            self::bankReference($record),
+            $record->invoice !== null
+                ? 'HĐ '.$record->invoice->invoice_number.($matched !== null ? ' ('.$matched.')' : '')
+                : null,
+            $record->note,
+        ]);
+    }
+
+    public static function bankReference(BankTransaction $record): string
+    {
+        return trim(($record->bank ?? '').' '.($record->reference_code ?? ''));
+    }
+
+    public static function matchedLabel(BankTransaction $record): ?string
+    {
+        return $record->status === BankTransactionStatus::Matched ? 'Ghi nhận '.VietnameseMoney::format($record->matched_amount) : null;
     }
 
     public static function getEloquentQuery(): Builder

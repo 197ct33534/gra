@@ -3,11 +3,13 @@
 namespace App\Filament\Widgets;
 
 use App\Filament\Resources\Parts\PartResource;
+use App\Filament\Support\PhoneTable;
 use App\Models\Part;
 use App\Models\User;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
+use Illuminate\Contracts\Support\Htmlable;
 
 class LowStockAlertWidget extends TableWidget
 {
@@ -30,12 +32,21 @@ class LowStockAlertWidget extends TableWidget
                 TextColumn::make('sku')
                     ->label('SKU')
                     ->badge()
-                    ->color('gray'),
+                    ->color('gray')
+                    ->visibleFrom('md'),
                 TextColumn::make('name')
-                    ->label('Tên phụ tùng'),
+                    ->label('Tên phụ tùng')
+                    // Điện thoại: SKU, kệ, số đang giữ, ngưỡng ghi gọn dưới tên (CSS ẩn dòng này từ 768px).
+                    ->description(fn (Part $record): Htmlable => PhoneTable::summary([
+                        $record->sku,
+                        'Kệ '.($record->shelf_location ?: 'chưa xếp'),
+                        'Giữ '.(int) $record->reserved_quantity,
+                        'Ngưỡng '.(int) $record->min_stock_alert,
+                    ])),
                 TextColumn::make('shelf_location')
                     ->label('Vị trí kệ')
-                    ->placeholder('Chưa xếp kệ'),
+                    ->placeholder('Chưa xếp kệ')
+                    ->visibleFrom('md'),
                 TextColumn::make('stock_quantity')
                     ->label('Tồn hiện tại')
                     ->badge()
@@ -43,9 +54,11 @@ class LowStockAlertWidget extends TableWidget
                 TextColumn::make('reserved_quantity')
                     ->label('Đang giữ cho xe')
                     ->badge()
-                    ->color('warning'),
+                    ->color('warning')
+                    ->visibleFrom('md'),
                 TextColumn::make('min_stock_alert')
-                    ->label('Ngưỡng tối thiểu'),
+                    ->label('Ngưỡng tối thiểu')
+                    ->visibleFrom('md'),
             ])
             ->recordUrl(fn (Part $record): string => PartResource::getUrl('edit', ['record' => $record]))
             ->emptyStateHeading('Không có phụ tùng dưới ngưỡng');

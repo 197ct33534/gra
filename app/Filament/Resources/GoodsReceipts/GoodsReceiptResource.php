@@ -6,6 +6,7 @@ use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\GoodsReceipts\Pages\CreateGoodsReceipt;
 use App\Filament\Resources\GoodsReceipts\Pages\ListGoodsReceipts;
 use App\Filament\Resources\GoodsReceipts\Pages\ViewGoodsReceipt;
+use App\Filament\Support\PhoneTable;
 use App\Models\GoodsReceipt;
 use App\Models\Part;
 use App\Models\User;
@@ -24,6 +25,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
@@ -150,17 +152,27 @@ class GoodsReceiptResource extends Resource
                 TextColumn::make('code')
                     ->label('Mã')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    // Điện thoại: NCC / ngày nhập / PO / người nhập bị ẩn nên ghi gọn dưới mã.
+                    ->description(fn (GoodsReceipt $record): Htmlable => PhoneTable::summary([
+                        $record->supplier?->name,
+                        $record->received_at?->timezone((string) config('garage.timezone'))->format('d/m/Y H:i'),
+                        $record->purchaseOrder?->code ?? 'Nhập lẻ',
+                        $record->creator?->name,
+                    ])),
                 TextColumn::make('supplier.name')
                     ->label('NCC')
+                    ->visibleFrom('md')
                     ->searchable(),
                 TextColumn::make('purchaseOrder.code')
                     ->label('PO')
                     ->placeholder('Nhập lẻ')
+                    ->visibleFrom('md')
                     ->toggleable(),
                 TextColumn::make('received_at')
                     ->label('Ngày nhập')
                     ->dateTime('d/m/Y H:i')
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('total_amount')
                     ->label('Tổng')
@@ -168,6 +180,7 @@ class GoodsReceiptResource extends Resource
                     ->visible(fn (): bool => User::currentCanSeeCosts()),
                 TextColumn::make('creator.name')
                     ->label('Người nhập')
+                    ->visibleFrom('md')
                     ->toggleable(),
             ])
             ->recordActions([

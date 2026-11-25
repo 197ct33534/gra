@@ -5,6 +5,7 @@ namespace App\Filament\Resources\CustomerMessages;
 use App\Enums\CustomerMessageStatus;
 use App\Enums\CustomerMessageType;
 use App\Filament\Resources\CustomerMessages\Pages\ListCustomerMessages;
+use App\Filament\Support\PhoneTable;
 use App\Models\CustomerMessage;
 use App\Services\MessagingService;
 use BackedEnum;
@@ -17,8 +18,11 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class CustomerMessageResource extends Resource
@@ -56,14 +60,18 @@ class CustomerMessageResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('created_at')->label('Tạo')->dateTime('d/m H:i')->sortable(),
-                TextColumn::make('customer.name')->label('Khách')->searchable(),
-                TextColumn::make('phone')->label('SĐT')->searchable(),
-                TextColumn::make('type')->label('Loại')->badge(),
-                TextColumn::make('channel')->label('Kênh'),
+                TextColumn::make('created_at')->label('Tạo')->dateTime('d/m H:i')->visibleFrom('md')->sortable(),
+                TextColumn::make('customer.name')
+                    ->label('Khách')
+                    ->searchable()
+                    // Điện thoại: các cột SĐT / loại / kênh / giờ tạo / lỗi bị ẩn nên ghi gọn dưới tên khách.
+                    ->description(fn (CustomerMessage $record): Htmlable => self::phoneSummary($record)),
+                TextColumn::make('phone')->label('SĐT')->visibleFrom('md')->searchable(),
+                TextColumn::make('type')->label('Loại')->badge()->visibleFrom('md'),
+                TextColumn::make('channel')->label('Kênh')->visibleFrom('md'),
                 TextColumn::make('status')->label('TT')->badge(),
-                TextColumn::make('attempts')->label('Thử'),
-                TextColumn::make('error')->label('Lỗi')->limit(40)->placeholder('—')->toggleable(),
+                TextColumn::make('attempts')->label('Thử')->visibleFrom('md'),
+                TextColumn::make('error')->label('Lỗi')->limit(40)->placeholder('—')->visibleFrom('md')->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('status')->options(CustomerMessageStatus::class),
@@ -91,6 +99,22 @@ class CustomerMessageResource extends Resource
                     }),
             ])
             ->defaultSort('id', 'desc');
+    }
+
+    /**
+     * Dòng phụ dưới tên khách, chỉ hiện trên điện thoại: SĐT · loại tin · kênh · giờ tạo · lỗi (rút gọn, chữ đỏ).
+     */
+    public static function phoneSummary(CustomerMessage $record): Htmlable
+    {
+        return PhoneTable::summary([
+            $record->phone,
+            $record->type?->getLabel(),
+            $record->channel,
+            $record->created_at?->timezone((string) config('garage.timezone'))->format('d/m H:i'),
+            filled($record->error)
+                ? new HtmlString('<span style="color:#dc2626">'.e(Str::limit((string) $record->error, 40)).'</span>')
+                : null,
+        ]);
     }
 
     public static function getEloquentQuery(): Builder

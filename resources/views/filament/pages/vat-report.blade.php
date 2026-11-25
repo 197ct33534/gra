@@ -25,11 +25,12 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left border-b">
+                        {{-- Điện thoại (< 768px): chỉ giữ Số HĐ · VAT · Tổng; tổng kỳ đã ghi ở dòng trên. --}}
                         <th class="py-2 pr-3">Số HĐ</th>
-                        <th class="py-2 pr-3">Ngày</th>
-                        <th class="py-2 pr-3">Bên trả</th>
-                        <th class="py-2 pr-3">VAT%</th>
-                        <th class="py-2 pr-3">Trước thuế</th>
+                        <th class="py-2 pr-3 hide-phone">Ngày</th>
+                        <th class="py-2 pr-3 hide-phone">Bên trả</th>
+                        <th class="py-2 pr-3 hide-phone">VAT%</th>
+                        <th class="py-2 pr-3 hide-phone">Trước thuế</th>
                         <th class="py-2 pr-3">VAT</th>
                         <th class="py-2">Tổng</th>
                     </tr>
@@ -38,10 +39,10 @@
                     @forelse ($out as $invoice)
                         <tr class="border-b border-gray-100 dark:border-white/5">
                             <td class="py-2 pr-3">{{ $invoice->invoice_number }}</td>
-                            <td class="py-2 pr-3">{{ $invoice->created_at?->timezone(config('garage.timezone'))->format('d/m/Y') }}</td>
-                            <td class="py-2 pr-3">{{ $invoice->payer()->getLabel() }}</td>
-                            <td class="py-2 pr-3">{{ $invoice->vat_rate ?? '—' }}</td>
-                            <td class="py-2 pr-3">{{ $this->money($invoice->amount_before_vat) }}</td>
+                            <td class="py-2 pr-3 hide-phone">{{ $invoice->created_at?->timezone(config('garage.timezone'))->format('d/m/Y') }}</td>
+                            <td class="py-2 pr-3 hide-phone">{{ $invoice->payer()->getLabel() }}</td>
+                            <td class="py-2 pr-3 hide-phone">{{ $invoice->vat_rate ?? '—' }}</td>
+                            <td class="py-2 pr-3 hide-phone">{{ $this->money($invoice->amount_before_vat) }}</td>
                             <td class="py-2 pr-3">{{ $this->money($invoice->vat_amount) }}</td>
                             <td class="py-2">{{ $this->money($invoice->total_amount) }}</td>
                         </tr>
@@ -64,11 +65,12 @@
             <table class="w-full text-sm">
                 <thead>
                     <tr class="text-left border-b">
+                        {{-- Điện thoại: chỉ giữ NCC · VAT · Tổng. --}}
                         <th class="py-2 pr-3">NCC</th>
-                        <th class="py-2 pr-3">Số HĐ</th>
-                        <th class="py-2 pr-3">Ngày</th>
-                        <th class="py-2 pr-3">VAT%</th>
-                        <th class="py-2 pr-3">Trước thuế</th>
+                        <th class="py-2 pr-3 hide-phone">Số HĐ</th>
+                        <th class="py-2 pr-3 hide-phone">Ngày</th>
+                        <th class="py-2 pr-3 hide-phone">VAT%</th>
+                        <th class="py-2 pr-3 hide-phone">Trước thuế</th>
                         <th class="py-2 pr-3">VAT</th>
                         <th class="py-2">Tổng</th>
                     </tr>
@@ -77,10 +79,10 @@
                     @forelse ($in as $bill)
                         <tr class="border-b border-gray-100 dark:border-white/5">
                             <td class="py-2 pr-3">{{ $bill->supplier?->name }}</td>
-                            <td class="py-2 pr-3">{{ $bill->bill_number ?? '—' }}</td>
-                            <td class="py-2 pr-3">{{ $bill->bill_date?->format('d/m/Y') }}</td>
-                            <td class="py-2 pr-3">{{ $bill->vat_rate }}</td>
-                            <td class="py-2 pr-3">{{ $this->money($bill->amount_before_vat) }}</td>
+                            <td class="py-2 pr-3 hide-phone">{{ $bill->bill_number ?? '—' }}</td>
+                            <td class="py-2 pr-3 hide-phone">{{ $bill->bill_date?->format('d/m/Y') }}</td>
+                            <td class="py-2 pr-3 hide-phone">{{ $bill->vat_rate }}</td>
+                            <td class="py-2 pr-3 hide-phone">{{ $this->money($bill->amount_before_vat) }}</td>
                             <td class="py-2 pr-3">{{ $this->money($bill->vat_amount) }}</td>
                             <td class="py-2">{{ $this->money($bill->total_amount) }}</td>
                         </tr>

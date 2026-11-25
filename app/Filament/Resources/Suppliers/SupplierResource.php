@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Suppliers;
 use App\Filament\Resources\Suppliers\Pages\CreateSupplier;
 use App\Filament\Resources\Suppliers\Pages\EditSupplier;
 use App\Filament\Resources\Suppliers\Pages\ListSuppliers;
+use App\Filament\Support\PhoneTable;
 use App\Models\Supplier;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -20,6 +21,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 class SupplierResource extends Resource
@@ -102,23 +104,34 @@ class SupplierResource extends Resource
                 TextColumn::make('code')
                     ->label('Mã')
                     ->badge()
+                    ->visibleFrom('md')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('name')
                     ->label('Tên NCC')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    // Điện thoại: mã / SĐT / MST / công nợ bị ẩn nên ghi gọn dưới tên.
+                    ->description(fn (Supplier $record): Htmlable => PhoneTable::summary([
+                        $record->code,
+                        $record->phone,
+                        filled($record->tax_code) ? 'MST '.$record->tax_code : null,
+                        'Công nợ '.$record->payment_terms_days.' ngày',
+                    ])),
                 TextColumn::make('phone')
                     ->label('SĐT')
+                    ->visibleFrom('md')
                     ->searchable()
                     ->placeholder('—'),
                 TextColumn::make('tax_code')
                     ->label('MST')
+                    ->visibleFrom('md')
                     ->toggleable()
                     ->placeholder('—'),
                 TextColumn::make('payment_terms_days')
                     ->label('Công nợ')
                     ->suffix(' ngày')
+                    ->visibleFrom('md')
                     ->sortable(),
                 IconColumn::make('is_active')
                     ->label('HT')

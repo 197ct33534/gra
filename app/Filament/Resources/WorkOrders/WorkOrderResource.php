@@ -14,6 +14,7 @@ use App\Filament\Resources\WorkOrders\Pages\CreateWorkOrder;
 use App\Filament\Resources\WorkOrders\Pages\EditWorkOrder;
 use App\Filament\Resources\WorkOrders\Pages\ListWorkOrders;
 use App\Filament\Resources\WorkOrders\Pages\ViewWorkOrder;
+use App\Filament\Support\PhoneTable;
 use App\Helpers\LicensePlateHelper;
 use App\Models\Invoice;
 use App\Models\Part;
@@ -31,7 +32,6 @@ use BackedEnum;
 use Closure;
 use DomainException;
 use Filament\Actions\Action;
-use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -690,47 +690,23 @@ class WorkOrderResource extends Resource
                             ->when($data['until'] ?? null, fn (Builder $query, string $date): Builder => $query->whereDate('created_at', '<=', $date));
                     }),
             ])
-            ->recordActions([
-                ...self::rowActionsFor([
-                    self::printJobCardAction(),
-                    self::printQuotationAction(),
-                    self::copyQuoteLinkAction(),
-                    self::copyStatusLinkAction(),
-                    self::copyFeedbackLinkAction(),
-                    self::createInvoiceAction(),
-                    self::printInvoiceAction(),
-                    self::printInsuranceInvoiceAction(),
-                    self::approveQuoteAction(),
-                    self::approveAddendumAction(),
-                    self::cancelApprovalAction(),
-                    self::completeDeliveryAction(),
-                    ViewAction::make(),
-                ], 'wo-act-inline'),
-                // Điện thoại: cùng các thao tác trên, gom vào một nút (CSS ẩn nhóm này từ 768px, ẩn nút rời dưới 768px).
-                ActionGroup::make(self::rowActionsFor([
-                    self::printJobCardAction(),
-                    self::printQuotationAction(),
-                    self::copyQuoteLinkAction(),
-                    self::copyStatusLinkAction(),
-                    self::copyFeedbackLinkAction(),
-                    self::createInvoiceAction(),
-                    self::printInvoiceAction(),
-                    self::printInsuranceInvoiceAction(),
-                    self::approveQuoteAction(),
-                    self::approveAddendumAction(),
-                    self::cancelApprovalAction(),
-                    self::completeDeliveryAction(),
-                    ViewAction::make(),
-                    EditAction::make(),
-                ], suffix: 'Phone'))
-                    ->label('Thao tác')
-                    ->tooltip('Thao tác')
-                    ->icon(Heroicon::EllipsisVertical)
-                    ->iconButton()
-                    ->color('gray')
-                    ->extraAttributes(['class' => 'wo-act-more']),
-                ...self::rowActionsFor([EditAction::make()], 'wo-act-inline'),
-            ])
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
+                self::printJobCardAction(),
+                self::printQuotationAction(),
+                self::copyQuoteLinkAction(),
+                self::copyStatusLinkAction(),
+                self::copyFeedbackLinkAction(),
+                self::createInvoiceAction(),
+                self::printInvoiceAction(),
+                self::printInsuranceInvoiceAction(),
+                self::approveQuoteAction(),
+                self::approveAddendumAction(),
+                self::cancelApprovalAction(),
+                self::completeDeliveryAction(),
+                ViewAction::make(),
+                EditAction::make(),
+            ]))
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
@@ -740,46 +716,25 @@ class WorkOrderResource extends Resource
     }
 
     /**
-     * Nút trên dòng danh sách: bản rời (máy tính, class 'wo-act-inline') hoặc bản trong nhóm '⋯ Thao tác'
-     * (điện thoại). Hai bản là hai action khác tên nên dùng chung được trong một bảng.
-     *
-     * @param  list<Action>  $actions
-     * @return list<Action>
-     */
-    public static function rowActionsFor(array $actions, ?string $class = null, string $suffix = ''): array
-    {
-        return array_map(function (Action $action) use ($class, $suffix): Action {
-            if ($suffix !== '') {
-                $action->name($action->getName().$suffix);
-            }
-
-            if ($class !== null) {
-                $action->extraAttributes(['class' => $class], merge: true);
-            }
-
-            return $action;
-        }, $actions);
-    }
-
-    /**
      * Dòng phụ dưới biển số, chỉ hiện trên điện thoại (thay các cột bị ẩn):
-     * mã lệnh · tên khách · giờ hẹn (đỏ nếu trễ) · tổng tiền (chỉ người được xem tiền).
+     * mã lệnh · tên khách · tổng tiền (chỉ người được xem tiền) · giờ hẹn (đỏ nếu trễ).
      */
     public static function phoneSummary(WorkOrder $record): Htmlable
     {
-        $parts = [e($record->code), e($record->vehicle?->customer?->name ?? '—')];
-
-        if (User::currentCanSeeMoney()) {
-            $parts[] = '<b>'.e(VietnameseMoney::format($record->final_amount)).'</b>';
-        }
+        $promise = null;
 
         if ($record->promised_at !== null) {
             $late = $record->promised_at->isPast() && $record->status !== WorkOrderStatus::Delivered;
             $time = e($record->promised_at->timezone((string) config('garage.timezone'))->format('H:i d/m'));
-            $parts[] = $late ? '<span style="color:#dc2626;font-weight:600">Trễ hẹn '.$time.'</span>' : 'Hẹn '.$time;
+            $promise = new HtmlString($late ? '<span style="color:#dc2626;font-weight:600">Trễ hẹn '.$time.'</span>' : 'Hẹn '.$time);
         }
 
-        return new HtmlString('<span class="wo-phone-only">'.implode(' · ', $parts).'</span>');
+        return PhoneTable::summary([
+            $record->code,
+            $record->vehicle?->customer?->name ?? '—',
+            User::currentCanSeeMoney() ? new HtmlString('<b>'.e(VietnameseMoney::format($record->final_amount)).'</b>') : null,
+            $promise,
+        ]);
     }
 
     public static function printJobCardAction(): Action

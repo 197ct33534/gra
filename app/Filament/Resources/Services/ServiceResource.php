@@ -6,6 +6,7 @@ use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\Services\Pages\CreateService;
 use App\Filament\Resources\Services\Pages\EditService;
 use App\Filament\Resources\Services\Pages\ListServices;
+use App\Filament\Support\PhoneTable;
 use App\Models\Service;
 use App\Models\User;
 use App\Services\PayrollService;
@@ -20,6 +21,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 class ServiceResource extends Resource
@@ -95,12 +97,23 @@ class ServiceResource extends Resource
             ->columns([
                 TextColumn::make('code')
                     ->label('Mã')
+                    ->visibleFrom('md')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('name')
                     ->label('Tên dịch vụ')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    // Điện thoại: mã / thời gian chuẩn / khoán thợ bị ẩn nên ghi gọn dưới tên.
+                    ->description(fn (Service $record): Htmlable => PhoneTable::summary([
+                        $record->code,
+                        $record->standard_time_minutes.' phút',
+                        User::currentCanSeeCosts()
+                            ? 'Khoán thợ '.($record->technician_payout !== null
+                                ? VietnameseMoney::format($record->technician_payout)
+                                : 'theo % ('.PayrollService::defaultRate().'%)')
+                            : null,
+                    ])),
                 TextColumn::make('labor_cost')
                     ->label('Tiền công')
                     ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
@@ -109,10 +122,12 @@ class ServiceResource extends Resource
                     ->label('Khoán thợ')
                     ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
                     ->placeholder(fn (): string => 'Theo % ('.PayrollService::defaultRate().'%)')
-                    ->visible(fn (): bool => User::currentCanSeeCosts()),
+                    ->visible(fn (): bool => User::currentCanSeeCosts())
+                    ->visibleFrom('md'),
                 TextColumn::make('standard_time_minutes')
                     ->label('Thời gian chuẩn')
                     ->suffix(' phút')
+                    ->visibleFrom('md')
                     ->sortable(),
             ])
             ->recordActions([

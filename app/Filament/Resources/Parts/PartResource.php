@@ -7,6 +7,7 @@ use App\Filament\Resources\Parts\Pages\CreatePart;
 use App\Filament\Resources\Parts\Pages\EditPart;
 use App\Filament\Resources\Parts\Pages\ListParts;
 use App\Filament\Resources\Parts\RelationManagers\CostHistoryRelationManager;
+use App\Filament\Support\PhoneTable;
 use App\Models\Part;
 use App\Models\User;
 use App\Support\VietnameseMoney;
@@ -25,6 +26,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
@@ -126,18 +128,28 @@ class PartResource extends Resource
             ->columns([
                 TextColumn::make('sku')
                     ->label('SKU')
+                    ->visibleFrom('md')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('name')
                     ->label('Tên phụ tùng')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    // Điện thoại: SKU / nhóm / giá bán / đang giữ bị ẩn nên ghi gọn dưới tên.
+                    ->description(fn (Part $record): Htmlable => PhoneTable::summary([
+                        $record->sku,
+                        $record->category?->name,
+                        VietnameseMoney::format($record->selling_price),
+                        $record->reserved_quantity > 0 ? 'Đang giữ '.$record->reserved_quantity : null,
+                    ])),
                 TextColumn::make('category.name')
                     ->label('Nhóm phụ tùng')
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('selling_price')
                     ->label('Giá bán')
                     ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('stock_quantity')
                     ->label('Tồn kho')
@@ -149,6 +161,7 @@ class PartResource extends Resource
                     ->badge()
                     ->color(fn (Part $record): string => $record->reserved_quantity > $record->stock_quantity ? 'danger' : 'gray')
                     ->tooltip('Đã duyệt báo giá, chờ bàn giao xe mới trừ tồn')
+                    ->visibleFrom('md')
                     ->sortable(),
             ])
             ->filters([

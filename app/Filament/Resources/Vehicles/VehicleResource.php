@@ -7,6 +7,7 @@ use App\Filament\Resources\Vehicles\Pages\EditVehicle;
 use App\Filament\Resources\Vehicles\Pages\ListVehicles;
 use App\Filament\Resources\Vehicles\Pages\ViewVehicle;
 use App\Filament\Resources\Vehicles\RelationManagers\WorkOrdersRelationManager;
+use App\Filament\Support\PhoneTable;
 use App\Helpers\LicensePlateHelper;
 use App\Models\Customer;
 use App\Models\Vehicle;
@@ -29,6 +30,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
@@ -206,10 +208,11 @@ class VehicleResource extends Resource
                     ->query(fn (Builder $query): Builder => $query->maintenanceDue()),
             ])
             ->recordUrl(fn (Vehicle $record): string => static::getUrl('view', ['record' => $record]))
-            ->recordActions([
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
                 ViewAction::make(),
                 EditAction::make(),
-            ])
+            ]))
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
@@ -229,15 +232,19 @@ class VehicleResource extends Resource
                 ->badge()
                 ->color('primary')
                 ->weight(FontWeight::Bold)
-                ->searchable(query: fn (Builder $query, string $search): Builder => LicensePlateHelper::applyVehicleSearch($query, $search)),
+                ->searchable(query: fn (Builder $query, string $search): Builder => LicensePlateHelper::applyVehicleSearch($query, $search))
+                // Điện thoại: các cột Hãng / Khách hàng / ODO bị ẩn nên ghi gọn dưới biển số.
+                ->description(fn (Vehicle $record): Htmlable => self::phoneSummary($record, $includeCustomer)),
             TextColumn::make('brand')
                 ->label('Hãng / Dòng xe')
+                ->visibleFrom('md')
                 ->formatStateUsing(fn (Vehicle $record): string => "{$record->brand} {$record->model}"),
         ];
 
         if ($includeCustomer) {
             $columns[] = TextColumn::make('customer.name')
                 ->label('Khách hàng')
+                ->visibleFrom('md')
                 ->sortable();
         }
 
@@ -245,9 +252,22 @@ class VehicleResource extends Resource
             ->label('ODO hiện tại')
             ->numeric(decimalPlaces: 0, locale: 'vi')
             ->suffix(' km')
+            ->visibleFrom('md')
             ->sortable();
 
         return $columns;
+    }
+
+    /**
+     * Dòng phụ dưới biển số, chỉ hiện trên điện thoại: hãng / dòng xe · khách hàng · ODO hiện tại.
+     */
+    public static function phoneSummary(Vehicle $record, bool $includeCustomer): Htmlable
+    {
+        return PhoneTable::summary([
+            trim("{$record->brand} {$record->model}"),
+            $includeCustomer ? $record->customer?->name : null,
+            $record->current_odo !== null ? number_format((int) $record->current_odo, 0, ',', '.').' km' : null,
+        ]);
     }
 
     public static function getRelations(): array

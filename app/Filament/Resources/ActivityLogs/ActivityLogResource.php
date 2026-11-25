@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ActivityLogs;
 use App\Enums\ActivityEvent;
 use App\Filament\Resources\ActivityLogs\Pages\ListActivityLogs;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
+use App\Filament\Support\PhoneTable;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Models\WorkOrder;
@@ -16,6 +17,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
@@ -68,9 +70,11 @@ class ActivityLogResource extends Resource
                 TextColumn::make('created_at')
                     ->label('Thời gian')
                     ->dateTime('H:i d/m/Y')
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('user.name')
                     ->label('Người thực hiện')
+                    ->visibleFrom('md')
                     ->placeholder('Hệ thống'),
                 TextColumn::make('event')
                     ->label('Thao tác')
@@ -78,12 +82,19 @@ class ActivityLogResource extends Resource
                 TextColumn::make('description')
                     ->label('Chi tiết')
                     ->wrap()
+                    // Điện thoại: thời gian, người thực hiện, chứng từ ghi gọn dưới chi tiết (CSS ẩn dòng này từ 768px).
+                    ->description(fn (ActivityLog $record): Htmlable => PhoneTable::summary([
+                        $record->created_at?->timezone((string) config('garage.timezone'))->format('H:i d/m/Y'),
+                        $record->user?->name ?? 'Hệ thống',
+                        $record->subject_label,
+                    ]))
                     ->searchable(),
                 TextColumn::make('subject_label')
                     ->label('Chứng từ')
                     ->badge()
                     ->color('gray')
                     ->placeholder('—')
+                    ->visibleFrom('md')
                     ->url(fn (ActivityLog $record): ?string => $record->subject_type === (new WorkOrder)->getMorphClass() && $record->event !== ActivityEvent::OrderDeleted
                         ? WorkOrderResource::getUrl('view', ['record' => $record->subject_id])
                         : null)

@@ -8,6 +8,7 @@ use App\Filament\Resources\PurchaseOrders\Pages\CreatePurchaseOrder;
 use App\Filament\Resources\PurchaseOrders\Pages\EditPurchaseOrder;
 use App\Filament\Resources\PurchaseOrders\Pages\ListPurchaseOrders;
 use App\Filament\Resources\PurchaseOrders\Pages\ViewPurchaseOrder;
+use App\Filament\Support\PhoneTable;
 use App\Models\Part;
 use App\Models\PurchaseOrder;
 use App\Models\User;
@@ -31,6 +32,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use UnitEnum;
@@ -153,9 +155,19 @@ class PurchaseOrderResource extends Resource
                 TextColumn::make('code')
                     ->label('Mã')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    // Điện thoại: NCC / tạm tính / dự kiến nhận / ngày đặt bị ẩn nên ghi gọn dưới mã.
+                    ->description(fn (PurchaseOrder $record): Htmlable => PhoneTable::summary([
+                        $record->supplier?->name,
+                        User::currentCanSeeCosts() ? VietnameseMoney::format($record->subtotal) : null,
+                        $record->expected_at !== null ? 'Dự kiến '.$record->expected_at->format('d/m/Y') : null,
+                        $record->ordered_at !== null
+                            ? 'Đặt '.$record->ordered_at->timezone((string) config('garage.timezone'))->format('d/m/Y H:i')
+                            : null,
+                    ])),
                 TextColumn::make('supplier.name')
                     ->label('NCC')
+                    ->visibleFrom('md')
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('status')
@@ -164,15 +176,18 @@ class PurchaseOrderResource extends Resource
                 TextColumn::make('subtotal')
                     ->label('Tạm tính')
                     ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
-                    ->visible(fn (): bool => User::currentCanSeeCosts()),
+                    ->visible(fn (): bool => User::currentCanSeeCosts())
+                    ->visibleFrom('md'),
                 TextColumn::make('expected_at')
                     ->label('Dự kiến nhận')
                     ->date('d/m/Y')
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->visibleFrom('md'),
                 TextColumn::make('ordered_at')
                     ->label('Ngày đặt')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('—')
+                    ->visibleFrom('md')
                     ->toggleable(),
             ])
             ->filters([
@@ -180,11 +195,12 @@ class PurchaseOrderResource extends Resource
                     ->label('Trạng thái')
                     ->options(PurchaseOrderStatus::class),
             ])
-            ->recordActions([
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
                 ViewAction::make(),
                 EditAction::make()
                     ->visible(fn (PurchaseOrder $record): bool => $record->status->canEditItems()),
-            ])
+            ]))
             ->defaultSort('id', 'desc');
     }
 

@@ -22,18 +22,19 @@
     </div>
 
     <x-filament::section>
+        {{-- Điện thoại (< 768px): chỉ giữ Cố vấn · Conversion · Doanh thu; cột khác có class hide-phone. --}}
         <div style="overflow-x:auto">
             <table class="ak-table">
                 <thead>
                 <tr>
                     <th>Cố vấn</th>
-                    <th class="num">RO tạo</th>
-                    <th class="num">Đã BG</th>
-                    <th class="num">Đã duyệt</th>
+                    <th class="num hide-phone">RO tạo</th>
+                    <th class="num hide-phone">Đã BG</th>
+                    <th class="num hide-phone">Đã duyệt</th>
                     <th class="num">Conversion</th>
-                    <th class="num">Xe giao</th>
+                    <th class="num hide-phone">Xe giao</th>
                     <th class="num">Doanh thu</th>
-                    <th class="num">Điểm TB</th>
+                    <th class="num hide-phone">Điểm TB</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -41,15 +42,15 @@
                     <tr>
                         <td>
                             <div style="font-weight:600">{{ $row['advisor']->name }}</div>
-                            <div class="ak-muted">{{ $row['advisor']->email }}</div>
+                            <div class="ak-muted hide-phone">{{ $row['advisor']->email }}</div>
                         </td>
-                        <td class="num">{{ $row['ros'] }}</td>
-                        <td class="num">{{ $row['quoted'] }}</td>
-                        <td class="num">{{ $row['approved'] }}</td>
+                        <td class="num hide-phone">{{ $row['ros'] }}</td>
+                        <td class="num hide-phone">{{ $row['quoted'] }}</td>
+                        <td class="num hide-phone">{{ $row['approved'] }}</td>
                         <td class="num">{{ number_format($row['conversion'], 1, ',', '.') }}%</td>
-                        <td class="num">{{ $row['delivered'] }}</td>
+                        <td class="num hide-phone">{{ $row['delivered'] }}</td>
                         <td class="num">{{ \App\Filament\Pages\AdvisorKpi::money($row['revenue']) }}</td>
-                        <td class="num">
+                        <td class="num hide-phone">
                             @if ($row['avg_feedback'] !== null)
                                 {{ number_format($row['avg_feedback'], 2, ',', '.') }}
                                 <span class="ak-muted">({{ $row['feedback_count'] }})</span>

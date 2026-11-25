@@ -6,6 +6,7 @@ use App\Enums\WarrantyCardStatus;
 use App\Filament\Resources\WarrantyCards\Pages\ListWarrantyCards;
 use App\Filament\Resources\WarrantyCards\Pages\ViewWarrantyCard;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
+use App\Filament\Support\PhoneTable;
 use App\Models\User;
 use App\Models\WarrantyCard;
 use App\Services\WarrantyService;
@@ -23,8 +24,10 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use UnitEnum;
 
 class WarrantyCardResource extends Resource
@@ -81,17 +84,22 @@ class WarrantyCardResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('code')->label('Mã')->searchable()->sortable(),
-                TextColumn::make('vehicle.license_plate')->label('Biển số')->searchable(),
-                TextColumn::make('item_name')->label('Hạng mục')->limit(40),
-                TextColumn::make('ends_at')->label('Hết hạn')->date('d/m/Y')->placeholder('—')->sortable(),
-                TextColumn::make('end_odo')->label('Km hết')->placeholder('—'),
+                TextColumn::make('code')->label('Mã')->visibleFrom('md')->searchable()->sortable(),
+                TextColumn::make('vehicle.license_plate')
+                    ->label('Biển số')
+                    ->searchable()
+                    // Điện thoại: các cột mã / hạng mục / hết hạn / km hết bị ẩn nên ghi gọn dưới biển số.
+                    ->description(fn (WarrantyCard $record): Htmlable => self::phoneSummary($record)),
+                TextColumn::make('item_name')->label('Hạng mục')->limit(40)->visibleFrom('md'),
+                TextColumn::make('ends_at')->label('Hết hạn')->date('d/m/Y')->placeholder('—')->visibleFrom('md')->sortable(),
+                TextColumn::make('end_odo')->label('Km hết')->placeholder('—')->visibleFrom('md'),
                 TextColumn::make('status')->label('TT')->badge(),
             ])
             ->filters([
                 SelectFilter::make('status')->options(WarrantyCardStatus::class),
             ])
-            ->recordActions([
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
                 ViewAction::make(),
                 Action::make('printCard')
                     ->label('In phiếu')
@@ -131,8 +139,21 @@ class WarrantyCardResource extends Resource
                     ->successRedirectUrl(fn (WarrantyCard $record): ?string => $record->fresh()?->claims()->latest('id')->first()?->work_order_id
                         ? WorkOrderResource::getUrl('edit', ['record' => $record->fresh()->claims()->latest('id')->first()->work_order_id])
                         : null),
-            ])
+            ]))
             ->defaultSort('id', 'desc');
+    }
+
+    /**
+     * Dòng phụ dưới biển số, chỉ hiện trên điện thoại: mã phiếu · hạng mục · hết hạn · km hết.
+     */
+    public static function phoneSummary(WarrantyCard $record): Htmlable
+    {
+        return PhoneTable::summary([
+            $record->code,
+            filled($record->item_name) ? Str::limit((string) $record->item_name, 40) : null,
+            $record->ends_at !== null ? 'Hết hạn '.$record->ends_at->format('d/m/Y') : null,
+            $record->end_odo !== null ? 'Đến '.number_format($record->end_odo, 0, ',', '.').' km' : null,
+        ]);
     }
 
     public static function getEloquentQuery(): Builder

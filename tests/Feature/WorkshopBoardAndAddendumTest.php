@@ -169,9 +169,9 @@ class WorkshopBoardAndAddendumTest extends TestCase
         $this->actingAs(User::query()->where('email', 'sa@gara.vn')->firstOrFail())
             ->get('/admin/work-orders')
             ->assertOk()
-            ->assertSee('wo-phone-only', false)
-            ->assertSee('wo-act-inline', false)
-            ->assertSee('wo-act-more', false)
+            ->assertSee('phone-only', false)
+            ->assertSee('act-inline', false)
+            ->assertSee('act-more', false)
             ->assertSee('Thao tác')
             ->assertSee('@media (max-width: 767px)', false);
     }

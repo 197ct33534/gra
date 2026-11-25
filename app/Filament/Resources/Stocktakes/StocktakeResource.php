@@ -7,6 +7,7 @@ use App\Filament\Resources\Stocktakes\Pages\CreateStocktake;
 use App\Filament\Resources\Stocktakes\Pages\EditStocktake;
 use App\Filament\Resources\Stocktakes\Pages\ListStocktakes;
 use App\Filament\Resources\Stocktakes\Pages\ViewStocktake;
+use App\Filament\Support\PhoneTable;
 use App\Models\Part;
 use App\Models\Stocktake;
 use App\Models\User;
@@ -29,6 +30,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
@@ -139,23 +141,36 @@ class StocktakeResource extends Resource
                 TextColumn::make('code')
                     ->label('Mã')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    // Điện thoại: số mã / giá trị lệch / người tạo / ngày áp dụng bị ẩn nên ghi gọn dưới mã.
+                    ->description(fn (Stocktake $record): Htmlable => PhoneTable::summary([
+                        $record->items_count.' mã',
+                        User::currentCanSeeCosts() ? 'Lệch '.VietnameseMoney::format($record->varianceValue()) : null,
+                        $record->creator?->name,
+                        $record->applied_at !== null
+                            ? 'Áp dụng '.$record->applied_at->timezone((string) config('garage.timezone'))->format('d/m/Y H:i')
+                            : null,
+                    ])),
                 TextColumn::make('status')
                     ->label('Trạng thái')
                     ->badge(),
                 TextColumn::make('items_count')
                     ->label('Số mã')
+                    ->visibleFrom('md')
                     ->counts('items'),
                 TextColumn::make('variance')
                     ->label('Giá trị lệch')
                     ->state(fn (Stocktake $record): string => VietnameseMoney::format($record->varianceValue()))
-                    ->visible(fn (): bool => User::currentCanSeeCosts()),
+                    ->visible(fn (): bool => User::currentCanSeeCosts())
+                    ->visibleFrom('md'),
                 TextColumn::make('creator.name')
-                    ->label('Người tạo'),
+                    ->label('Người tạo')
+                    ->visibleFrom('md'),
                 TextColumn::make('applied_at')
                     ->label('Áp dụng')
                     ->dateTime('d/m/Y H:i')
                     ->placeholder('—')
+                    ->visibleFrom('md')
                     ->sortable(),
             ])
             ->filters([
@@ -163,11 +178,12 @@ class StocktakeResource extends Resource
                     ->label('Trạng thái')
                     ->options(StocktakeStatus::class),
             ])
-            ->recordActions([
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
                 ViewAction::make(),
                 EditAction::make()
                     ->visible(fn (Stocktake $record): bool => $record->status->canEditCounts() && (User::current()?->isAdmin() ?? false)),
-            ])
+            ]))
             ->defaultSort('id', 'desc');
     }
 

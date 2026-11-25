@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
+use App\Filament\Support\PhoneTable;
 use App\Models\User;
 use App\Services\PayrollService;
 use BackedEnum;
@@ -20,6 +21,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 class UserResource extends Resource
@@ -93,10 +95,16 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('name')
                     ->label('Họ tên')
+                    // Điện thoại: email, chi nhánh ghi gọn dưới họ tên (CSS ẩn dòng này từ 768px).
+                    ->description(fn (User $record): Htmlable => PhoneTable::summary([
+                        $record->email,
+                        $record->branch?->name,
+                    ]))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('email')
                     ->label('Email')
+                    ->visibleFrom('md')
                     ->searchable(),
                 TextColumn::make('role')
                     ->label('Vai trò')
@@ -109,6 +117,7 @@ class UserResource extends Resource
                 TextColumn::make('branch.name')
                     ->label('Chi nhánh')
                     ->placeholder('—')
+                    ->visibleFrom('md')
                     ->toggleable(),
             ])
             ->filters([

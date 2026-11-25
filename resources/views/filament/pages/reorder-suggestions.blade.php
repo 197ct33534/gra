@@ -8,6 +8,11 @@
         .ro-toolbar { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 12px; }
         .ro-muted { opacity: .65; font-size: 12px; }
         .ro-danger { color: #dc2626; font-weight: 700; }
+        @media (max-width: 767px) {
+            .ro-table th, .ro-table td { padding: 8px 6px; }
+            .ro-table th.num { white-space: normal; }
+            .ro-table input[type="number"] { width: 64px; }
+        }
     </style>
 
     <div class="ro-toolbar">
@@ -34,13 +39,13 @@
                 <thead>
                 <tr>
                     <th></th>
-                    <th>SKU</th>
+                    <th class="hide-phone">SKU</th>
                     <th>Tên</th>
-                    <th>Nhóm</th>
+                    <th class="hide-phone">Nhóm</th>
                     <th class="num">Khả dụng</th>
-                    <th class="num">Ngưỡng</th>
+                    <th class="num hide-phone">Ngưỡng</th>
                     <th class="num">Đề xuất nhập</th>
-                    <th class="num">Giá vốn</th>
+                    <th class="num hide-phone">Giá vốn</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -49,13 +54,22 @@
                         <td>
                             <input type="checkbox" value="{{ $row['part']->id }}" wire:model="selected">
                         </td>
-                        <td>{{ $row['part']->sku }}</td>
-                        <td>{{ $row['part']->name }}</td>
-                        <td>{{ $row['part']->category?->name }}</td>
+                        <td class="hide-phone">{{ $row['part']->sku }}</td>
+                        <td>
+                            {{ $row['part']->name }}
+                            {{-- Điện thoại: SKU / nhóm / ngưỡng / giá vốn bị ẩn nên ghi gọn dưới tên. --}}
+                            <span class="phone-only" style="opacity:.7">{{ collect([
+                                $row['part']->sku,
+                                $row['part']->category?->name,
+                                'Ngưỡng '.$row['part']->min_stock_alert,
+                                \App\Filament\Pages\ReorderSuggestions::money((float) $row['part']->cost_price),
+                            ])->filter()->implode(' · ') }}</span>
+                        </td>
+                        <td class="hide-phone">{{ $row['part']->category?->name }}</td>
                         <td class="num {{ $row['available'] <= 0 ? 'ro-danger' : '' }}">{{ $row['available'] }}</td>
-                        <td class="num">{{ $row['part']->min_stock_alert }}</td>
+                        <td class="num hide-phone">{{ $row['part']->min_stock_alert }}</td>
                         <td class="num">{{ $row['suggest_qty'] }}</td>
-                        <td class="num">{{ \App\Filament\Pages\ReorderSuggestions::money((float) $row['part']->cost_price) }}</td>
+                        <td class="num hide-phone">{{ \App\Filament\Pages\ReorderSuggestions::money((float) $row['part']->cost_price) }}</td>
                     </tr>
                 @empty
                     <tr><td colspan="8" class="ro-muted">Không có mã dưới ngưỡng tồn.</td></tr>

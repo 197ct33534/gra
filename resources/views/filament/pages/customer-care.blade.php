@@ -30,10 +30,10 @@
                 <thead>
                     <tr>
                         <th>Xe</th>
-                        <th>Khách</th>
-                        <th>Tình trạng</th>
-                        <th>Dự kiến đến hạn</th>
-                        <th>Lần nhắc gần nhất</th>
+                        <th class="hide-phone">Khách</th>
+                        <th class="hide-phone">Tình trạng</th>
+                        <th class="hide-phone">Dự kiến đến hạn</th>
+                        <th class="hide-phone">Lần nhắc gần nhất</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -43,18 +43,23 @@
                             <td>
                                 <div class="cc-plate">{{ $row['vehicle']->license_plate }}</div>
                                 <div class="cc-muted">{{ trim($row['vehicle']->brand.' '.$row['vehicle']->model) }} · {{ number_format($row['vehicle']->current_odo, 0, ',', '.') }} km</div>
+                                {{-- Điện thoại: các cột Khách / Tình trạng / Dự kiến bị ẩn nên ghi gọn ở đây. --}}
+                                <div class="phone-only">
+                                    <span style="color:{{ $row['status'] === 'overdue' ? '#dc2626' : '#d97706' }};font-weight:600">{{ $row['status'] === 'overdue' ? 'Quá hạn' : 'Sắp đến hạn' }}</span>@if ($row['due']) · {{ $row['due'] }}@endif
+                                    <br>{{ $row['vehicle']->customer?->name }} · {{ $row['vehicle']->customer?->phone }}@if ($row['vehicle']->customer?->reminder_opt_out) · không nhận tin @endif
+                                </div>
                             </td>
-                            <td>
+                            <td class="hide-phone">
                                 {{ $row['vehicle']->customer?->name }}
                                 <div class="cc-muted">{{ $row['vehicle']->customer?->phone }}@if ($row['vehicle']->customer?->reminder_opt_out) · không nhận tin @endif</div>
                             </td>
-                            <td>
+                            <td class="hide-phone">
                                 <x-filament::badge :color="$row['status'] === 'overdue' ? 'danger' : 'warning'">
                                     {{ $row['status'] === 'overdue' ? 'Quá hạn' : 'Sắp đến hạn' }}
                                 </x-filament::badge>
                             </td>
-                            <td>{{ $row['due'] ?? '—' }}</td>
-                            <td>
+                            <td class="hide-phone">{{ $row['due'] ?? '—' }}</td>
+                            <td class="hide-phone">
                                 @if ($row['last_reminder'])
                                     {{ $row['last_reminder']->created_at->timezone($timezone)->format('d/m/Y') }}
                                     <div class="cc-muted">{{ $row['last_reminder']->status->getLabel() }}</div>
@@ -82,23 +87,25 @@
             <table class="cc-table">
                 <thead>
                     <tr>
-                        <th>Thời gian</th>
+                        <th class="hide-phone">Thời gian</th>
                         <th>Khách</th>
-                        <th>Loại</th>
-                        <th>Nội dung</th>
+                        <th class="hide-phone">Loại</th>
+                        <th class="hide-phone">Nội dung</th>
                         <th>Trạng thái</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($messages as $message)
                         <tr wire:key="msg-{{ $message->id }}">
-                            <td>{{ $message->created_at->timezone($timezone)->format('H:i d/m') }}</td>
+                            <td class="hide-phone">{{ $message->created_at->timezone($timezone)->format('H:i d/m') }}</td>
                             <td>
                                 {{ $message->customer?->name }}
                                 <div class="cc-muted">{{ $message->phone }} · {{ strtoupper($message->channel) }}</div>
+                                {{-- Điện thoại: các cột Thời gian / Loại / Nội dung bị ẩn nên ghi gọn ở đây. --}}
+                                <div class="phone-only cc-muted">{{ $message->created_at->timezone($timezone)->format('H:i d/m') }} · {{ $message->type->getLabel() }}</div>
                             </td>
-                            <td>{{ $message->type->getLabel() }}</td>
-                            <td class="cc-body">{{ $message->body }}</td>
+                            <td class="hide-phone">{{ $message->type->getLabel() }}</td>
+                            <td class="cc-body hide-phone">{{ $message->body }}</td>
                             <td>
                                 <x-filament::badge :color="$message->status->getColor()">{{ $message->status->getLabel() }}</x-filament::badge>
                                 @if ($message->error)

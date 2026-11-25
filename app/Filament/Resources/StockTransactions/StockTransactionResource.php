@@ -5,6 +5,7 @@ namespace App\Filament\Resources\StockTransactions;
 use App\Enums\StockTransactionType;
 use App\Filament\Resources\StockTransactions\Pages\ListStockTransactions;
 use App\Filament\Resources\WorkOrders\WorkOrderResource;
+use App\Filament\Support\PhoneTable;
 use App\Models\Part;
 use App\Models\StockTransaction;
 use App\Support\VietnameseMoney;
@@ -17,8 +18,10 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\HtmlString;
 use UnitEnum;
 
 class StockTransactionResource extends Resource
@@ -70,14 +73,19 @@ class StockTransactionResource extends Resource
                     ->label('Mã phiếu')
                     ->state(fn (StockTransaction $record): string => self::referenceLabel($record))
                     ->url(fn (StockTransaction $record): ?string => self::workOrderUrl($record))
-                    ->color(fn (StockTransaction $record): ?string => self::workOrderUrl($record) !== null ? 'primary' : null),
+                    ->color(fn (StockTransaction $record): ?string => self::workOrderUrl($record) !== null ? 'primary' : null)
+                    ->visibleFrom('md'),
                 TextColumn::make('created_at')
                     ->label('Ngày giao dịch')
                     ->dateTime('d/m/Y H:i')
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('part.name')
                     ->label('Phụ tùng')
-                    ->description(fn (StockTransaction $record): string => $record->part?->sku ?? '')
+                    // SKU (mọi màn hình) + trên điện thoại: loại / ngày / mã phiếu / đơn giá / người thực hiện.
+                    ->description(fn (StockTransaction $record): Htmlable => new HtmlString(
+                        e($record->part?->sku ?? '').self::phoneSummary($record)->toHtml(),
+                    ))
                     ->searchable(query: function (Builder $query, string $search): Builder {
                         return $query->whereHas('part', function (Builder $query) use ($search): void {
                             $query->where('name', 'like', "%{$search}%")
@@ -88,7 +96,8 @@ class StockTransactionResource extends Resource
                     ->label('Loại giao dịch')
                     ->badge()
                     ->formatStateUsing(fn (StockTransactionType $state): string => $state->getLabel())
-                    ->color(fn (StockTransactionType $state): string|array|null => $state->getColor()),
+                    ->color(fn (StockTransactionType $state): string|array|null => $state->getColor())
+                    ->visibleFrom('md'),
                 TextColumn::make('quantity')
                     ->label('Số lượng')
                     ->formatStateUsing(fn (int $state): string => ($state > 0 ? '+' : '').$state)
@@ -96,13 +105,16 @@ class StockTransactionResource extends Resource
                     ->alignEnd(),
                 TextColumn::make('unit_price')
                     ->label('Đơn giá')
-                    ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state)),
+                    ->formatStateUsing(fn (mixed $state): string => VietnameseMoney::format($state))
+                    ->visibleFrom('md'),
                 TextColumn::make('note')
                     ->label('Ghi chú')
                     ->placeholder('—')
+                    ->visibleFrom('md')
                     ->wrap(),
                 TextColumn::make('creator.name')
-                    ->label('Người thực hiện'),
+                    ->label('Người thực hiện')
+                    ->visibleFrom('md'),
             ])
             ->filters([
                 SelectFilter::make('transaction_type')
@@ -143,6 +155,27 @@ class StockTransactionResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->with(['part', 'creator', 'workOrder']);
+    }
+
+    /**
+     * Dòng phụ dưới tên phụ tùng, chỉ hiện trên điện thoại (thay các cột bị ẩn):
+     * loại giao dịch · ngày giờ · mã phiếu (bấm được nếu là lệnh sửa chữa) · đơn giá · người thực hiện · ghi chú.
+     */
+    public static function phoneSummary(StockTransaction $record): Htmlable
+    {
+        $reference = self::referenceLabel($record);
+        $url = self::workOrderUrl($record);
+
+        return PhoneTable::summary([
+            $record->transaction_type?->getLabel(),
+            $record->created_at?->timezone((string) config('garage.timezone'))->format('d/m/Y H:i'),
+            $url !== null
+                ? new HtmlString('<a href="'.e($url).'" style="color:#2563eb;text-decoration:underline">'.e($reference).'</a>')
+                : ($reference !== '—' ? $reference : null),
+            VietnameseMoney::format($record->unit_price),
+            $record->creator?->name,
+            $record->note,
+        ]);
     }
 
     public static function referenceLabel(StockTransaction $record): string

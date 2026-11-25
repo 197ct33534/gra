@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Branches;
 use App\Filament\Resources\Branches\Pages\CreateBranch;
 use App\Filament\Resources\Branches\Pages\EditBranch;
 use App\Filament\Resources\Branches\Pages\ListBranches;
+use App\Filament\Support\PhoneTable;
 use App\Models\Branch;
 use BackedEnum;
 use Filament\Actions\EditAction;
@@ -16,6 +17,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 class BranchResource extends Resource
@@ -71,11 +73,18 @@ class BranchResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('code')->label('Mã')->badge(),
-                TextColumn::make('name')->label('Tên')->searchable(),
-                TextColumn::make('hotline')->label('Hotline')->placeholder('—'),
-                IconColumn::make('is_active')->label('Active')->boolean(),
-                IconColumn::make('is_default')->label('Mặc định')->boolean(),
-                TextColumn::make('users_count')->label('NV')->counts('users'),
+                TextColumn::make('name')->label('Tên')->searchable()
+                    // Điện thoại: hotline, trạng thái, số nhân viên ghi gọn dưới tên (CSS ẩn dòng này từ 768px).
+                    ->description(fn (Branch $record): Htmlable => PhoneTable::summary([
+                        $record->hotline,
+                        $record->is_active ? null : 'Ngừng hoạt động',
+                        $record->is_default ? 'Mặc định' : null,
+                        isset($record->users_count) ? $record->users_count.' NV' : null,
+                    ])),
+                TextColumn::make('hotline')->label('Hotline')->placeholder('—')->visibleFrom('md'),
+                IconColumn::make('is_active')->label('Active')->boolean()->visibleFrom('md'),
+                IconColumn::make('is_default')->label('Mặc định')->boolean()->visibleFrom('md'),
+                TextColumn::make('users_count')->label('NV')->counts('users')->visibleFrom('md'),
             ])
             ->recordActions([EditAction::make()])
             ->defaultSort('id');

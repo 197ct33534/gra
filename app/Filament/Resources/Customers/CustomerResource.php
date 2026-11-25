@@ -10,6 +10,7 @@ use App\Filament\Resources\Customers\Pages\EditCustomer;
 use App\Filament\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Resources\Customers\Pages\ViewCustomer;
 use App\Filament\Resources\Customers\RelationManagers\VehiclesRelationManager;
+use App\Filament\Support\PhoneTable;
 use App\Models\Customer;
 use App\Models\User;
 use App\Services\WalletService;
@@ -33,6 +34,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use UnitEnum;
 
 class CustomerResource extends Resource
@@ -146,12 +148,16 @@ class CustomerResource extends Resource
                 TextColumn::make('name')
                     ->label('Họ tên')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    // Điện thoại: các cột SĐT / loại khách / số xe / hạng / ví bị ẩn nên ghi gọn dưới tên.
+                    ->description(fn (Customer $record): Htmlable => self::phoneSummary($record)),
                 TextColumn::make('phone')
                     ->label('Số điện thoại')
+                    ->visibleFrom('md')
                     ->searchable(),
                 TextColumn::make('customer_type')
                     ->label('Loại khách')
+                    ->visibleFrom('md')
                     ->badge()
                     ->formatStateUsing(fn (CustomerType $state): string => $state->getLabel())
                     ->color(fn (CustomerType $state): string => match ($state) {
@@ -161,18 +167,22 @@ class CustomerResource extends Resource
                 TextColumn::make('vehicles_count')
                     ->label('Số xe')
                     ->counts('vehicles')
+                    ->visibleFrom('md')
                     ->sortable(),
                 TextColumn::make('loyalty_points')
                     ->label('Điểm')
+                    ->visibleFrom('md')
                     ->sortable()
                     ->toggleable(),
                 TextColumn::make('loyalty_tier')
                     ->label('Hạng')
+                    ->visibleFrom('md')
                     ->badge()
                     ->toggleable(),
                 TextColumn::make('wallet_balance')
                     ->label('Ví')
                     ->money('VND')
+                    ->visibleFrom('md')
                     ->sortable()
                     ->toggleable(),
             ])
@@ -182,17 +192,32 @@ class CustomerResource extends Resource
                     ->options(CustomerType::class),
             ])
             ->recordUrl(fn (Customer $record): string => static::getUrl('view', ['record' => $record]))
-            ->recordActions([
+            // Máy tính: nút rời; điện thoại: gom vào nút ⋮ (App\Filament\Support\PhoneTable).
+            ->recordActions(PhoneTable::actions(fn (): array => [
                 ViewAction::make(),
                 EditAction::make(),
                 self::depositWalletAction(),
-            ])
+            ]))
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('name');
+    }
+
+    /**
+     * Dòng phụ dưới tên khách, chỉ hiện trên điện thoại: SĐT · loại khách · số xe · hạng · số dư ví (nếu có).
+     */
+    public static function phoneSummary(Customer $record): Htmlable
+    {
+        return PhoneTable::summary([
+            $record->phone,
+            $record->customer_type?->getLabel(),
+            $record->vehicles_count !== null ? $record->vehicles_count.' xe' : null,
+            $record->loyalty_tier?->getLabel(),
+            (float) $record->wallet_balance > 0 ? 'Ví '.VietnameseMoney::format($record->wallet_balance) : null,
+        ]);
     }
 
     public static function getRelations(): array

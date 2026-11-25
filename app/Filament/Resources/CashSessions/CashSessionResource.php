@@ -8,6 +8,7 @@ use App\Enums\CashSessionStatus;
 use App\Filament\Forms\MoneyInput;
 use App\Filament\Resources\CashSessions\Pages\ListCashSessions;
 use App\Filament\Resources\CashSessions\Pages\ViewCashSession;
+use App\Filament\Support\PhoneTable;
 use App\Models\CashSession;
 use App\Models\User;
 use App\Services\CashService;
@@ -26,6 +27,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use UnitEnum;
@@ -102,23 +104,32 @@ class CashSessionResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('opened_at')->label('Mở')->dateTime('d/m/Y H:i')->sortable(),
-                TextColumn::make('opener.name')->label('Người mở'),
+                TextColumn::make('opened_at')
+                    ->label('Mở')
+                    ->dateTime('d/m/Y H:i')
+                    ->sortable()
+                    // Điện thoại: người mở / dư đầu / dự kiến / lệch bị ẩn nên ghi gọn dưới giờ mở.
+                    ->description(fn (CashSession $r): Htmlable => PhoneTable::summary([
+                        $r->opener?->name,
+                        'Dư đầu '.VietnameseMoney::format($r->opening_balance),
+                        'Dự kiến '.VietnameseMoney::format(self::expectedBalance($r)),
+                        $r->difference !== null ? 'Lệch '.VietnameseMoney::format($r->difference) : null,
+                    ])),
+                TextColumn::make('opener.name')->label('Người mở')->visibleFrom('md'),
                 TextColumn::make('status')->label('TT')->badge(),
                 TextColumn::make('opening_balance')
                     ->label('Dư đầu')
-                    ->formatStateUsing(fn (mixed $s): string => VietnameseMoney::format($s)),
+                    ->formatStateUsing(fn (mixed $s): string => VietnameseMoney::format($s))
+                    ->visibleFrom('md'),
                 TextColumn::make('expected_balance')
                     ->label('Dự kiến')
-                    ->state(fn (CashSession $r): string => VietnameseMoney::format(
-                        $r->status === CashSessionStatus::Closed
-                            ? (float) ($r->expected_balance ?? 0)
-                            : $r->computedExpectedBalance()
-                    )),
+                    ->state(fn (CashSession $r): string => VietnameseMoney::format(self::expectedBalance($r)))
+                    ->visibleFrom('md'),
                 TextColumn::make('difference')
                     ->label('Lệch')
                     ->formatStateUsing(fn (mixed $s): string => $s === null ? '—' : VietnameseMoney::format($s))
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->visibleFrom('md'),
             ])
             ->filters([
                 SelectFilter::make('status')->options(CashSessionStatus::class),
@@ -127,6 +138,14 @@ class CashSessionResource extends Resource
                 ViewAction::make(),
             ])
             ->defaultSort('id', 'desc');
+    }
+
+    /** Ca đã đóng: số dự kiến đã chốt; ca đang mở: tính lại từ biến động. */
+    public static function expectedBalance(CashSession $r): float
+    {
+        return $r->status === CashSessionStatus::Closed
+            ? (float) ($r->expected_balance ?? 0)
+            : $r->computedExpectedBalance();
     }
 
     public static function getEloquentQuery(): Builder
